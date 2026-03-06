@@ -48,7 +48,49 @@
     </div>
 
     <div id="map"></div>
+    <button id="addPlaceFab" class="fab" title="Add new place">
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+    </button>
 
+    <div id="addPlaceModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Add New Place</h2>
+            <p style="font-size: 14px; color: #6b7280; margin-bottom: 20px;">Submit a place for admin review.</p>
+
+            <div class="form-group">
+                <label for="placeTitle">Place Name</label>
+                <input type="text" id="placeTitle" placeholder="e.g. New Cafe" required>
+            </div>
+
+            <div class="form-group">
+                <label for="placeOpenTime">Open Time (Optional)</label>
+                <input type="text" id="placeOpenTime" placeholder="e.g. 08:00 - 18:00">
+            </div>
+
+            <div class="form-group">
+                <label>Location</label>
+                <button type="button" id="pickLocationBtn" class="btn-secondary">📍 Pick Location on Map</button>
+                <p id="selectedCoordsText" style="font-size: 12px; color: #059669; margin-top: 8px; display: none;">
+                    Location selected!</p>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" id="cancelModalBtn" class="btn-text">Cancel</button>
+                <button type="button" id="submitPlaceBtn" class="btn-primary">Submit Place</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mapConfirmUI" class="map-confirm-ui hidden">
+        <p>Drag the map to the exact location.</p>
+        <div style="display: flex; gap: 10px; align-items: center; justify-content: center;">
+            <button id="cancelMarkerBtn" class="btn-text" style="background: transparent; margin: 0;">Cancel</button>
+            <button id="confirmMarkerBtn" class="btn-primary" style="margin: 0;">Confirm Location</button>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
 

@@ -2,16 +2,22 @@
   {
     "title": "Silpakorn University",
     "lat": 13.8188,
-    "lng": 100.0402
+    "lng": 100.0402,
+    "openTime": "Open 24 Hours",
+    "description": "The main campus area."
   },
   {
     "title": "Computer Science Building",
     "lat": 13.8195,
-    "lng": 100.0410
+    "lng": 100.0410,
+    "openTime": "8:00 AM - 8:00 PM",
+    "description": "Department of Computing."
   },
   {
     "title": "Main Library",
     "lat": 13.8180,
-    "lng": 100.0390
+    "lng": 100.0390,
+    "openTime": "9:00 AM - 6:00 PM",
+    "description": "Central university library."
   }
 ]

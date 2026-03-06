@@ -6,7 +6,10 @@ const fs = require("fs");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(express.static(path.join(__dirname, "../frontend")));
+// IMPORTANT: Middleware to read POST request bodies
+app.use(express.json());
+
+app.use(express.static(path.join(__dirname, "../Frontend")));
 
 // ENDPOINT 1: Send the API Key to the frontend safely
 app.get("/api/config", (req, res) => {
@@ -17,10 +20,7 @@ app.get("/api/config", (req, res) => {
 
 // ENDPOINT 2: Send the location data from places_data.json
 app.get("/api/data", (req, res) => {
-  // 1. Define exactly where the JSON file is located
   const dataPath = path.join(__dirname, "places_data.json");
-
-  // 2. Read the file
   fs.readFile(dataPath, "utf8", (err, data) => {
     if (err) {
       console.error("Error reading places_data.json:", err);
@@ -30,16 +30,43 @@ app.get("/api/data", (req, res) => {
   });
 });
 
-// ENDPOINT 3: Send the location details
-app.get("/api/details", (req, res) => {
-  const detailPath = path.join(__dirname, "place_detail.json");
+// ENDPOINT 3: Receive new place submission and save to pending_places.json
+app.post("/api/submit-place", (req, res) => {
+  const newPlace = req.body;
+  const pendingPath = path.join(__dirname, "pending_places.json");
 
-  fs.readFile(detailPath, "utf8", (err, data) => {
-    if (err) {
-      console.error("Error reading place_detail.json:", err);
-      return res.status(500).json({ error: "Failed to load details" });
+  // Add a timestamp and status for admin review purposes
+  newPlace.id = Date.now();
+  newPlace.status = "pending";
+  newPlace.submittedAt = new Date().toISOString();
+
+  // Read the existing pending places file (or create empty array if it doesn't exist)
+  fs.readFile(pendingPath, "utf8", (err, data) => {
+    let pendingList = [];
+
+    if (!err && data) {
+      try {
+        pendingList = JSON.parse(data);
+      } catch (parseErr) {
+        console.error("Error parsing pending list", parseErr);
+      }
     }
-    res.json(JSON.parse(data));
+
+    // Add the new submission to the list
+    pendingList.push(newPlace);
+
+    // Save it back to the file
+    fs.writeFile(
+      pendingPath,
+      JSON.stringify(pendingList, null, 2),
+      (writeErr) => {
+        if (writeErr) {
+          console.error("Error saving pending place:", writeErr);
+          return res.status(500).json({ error: "Failed to save submission" });
+        }
+        res.json({ success: true, message: "Place submitted successfully." });
+      },
+    );
   });
 });
 

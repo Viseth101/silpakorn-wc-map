@@ -240,6 +240,14 @@ input#darkModeToggle:checked~.toggle-dot {
         top: 4px;
         left: 4px;
     }
+
+    /* Push the Add Place button above the bottom control bar */
+    #addPlaceFab {
+        bottom: 90px !important;
+        right: 15px !important;
+        width: 50px !important;
+        height: 50px !important;
+    }
 }
 
 /* ========================================== */
@@ -295,6 +303,12 @@ input#darkModeToggle:checked~.toggle-dot {
         width: 100%;
         min-width: unset;
     }
+
+    /* Bring the Add Place button back down since controls are on the left */
+    #addPlaceFab {
+        bottom: 30px !important;
+        right: 15px !important;
+    }
 }
 
 /* ========================================== */
@@ -330,4 +344,216 @@ button.gm-ui-hover-effect {
     background-color: white;
     opacity: 1;
     /* Keeping it solid for visibility */
+}
+
+/* ========================================== */
+/* 6. ADD PLACE UI (FAB & MODAL)              */
+/* ========================================== */
+
+/* Floating Action Button */
+.fab {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background-color: #1b3899;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.fab:hover {
+    transform: scale(1.05);
+    background-color: #152b75;
+}
+
+/* Utility to hide elements */
+.hidden {
+    display: none !important;
+}
+
+/* Modal Overlay (Blurred background) */
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(5px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Modal Content Box */
+.modal-content {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-theme .modal-content {
+    background-color: #1f2937;
+    color: white;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+.form-group input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+body.dark-theme .form-group input {
+    background: #374151;
+    color: white;
+    border-color: #4b5563;
+}
+
+/* Buttons */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.btn-primary {
+    background: #1b3899;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-secondary {
+    background: #e5e7eb;
+    color: #1f2937;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.btn-text {
+    background: transparent;
+    color: #4b5563;
+    border: none;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* Map Confirmation UI overlay */
+.map-confirm-ui {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 50;
+    text-align: center;
+}
+
+.map-confirm-ui p {
+    margin: 0 0 12px 0;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+/* ========================================== */
+/* 7. GOOGLE MAPS POPUP OVERRIDES & ANIMATION */
+/* ========================================== */
+
+/* 1. Hide the default close button */
+button.gm-ui-hover-effect {
+    display: none !important; 
+}
+
+/* 2. Make the main wrapper completely invisible */
+.gm-style-iw-c {
+    padding: 0 !important;
+    background: transparent !important; 
+    box-shadow: none !important; 
+    border-radius: 0 !important; 
+}
+
+/* 3. Kill the weird scrollbars and padding on the inner content */
+.gm-style-iw-d {
+    overflow: hidden !important; 
+    padding: 0 !important;
+    max-height: none !important;
+}
+
+/* 4. Hide the default pointer/tail */
+.gm-style-iw-tc {
+    display: none !important; 
+}
+
+/* 5. Remove the ugly black focus border around the marker when clicked */
+.gm-style img {
+    outline: none !important;
+    border: none !important;
+}
+
+/* The "Grow from Marker" Animation */
+@keyframes growFromMarker {
+    0% { 
+        opacity: 0; 
+        transform: scale(0); 
+    }
+    100% { 
+        opacity: 1; 
+        transform: scale(1); 
+    }
+}
+
+.animated-popup {
+    padding: 16px;
+    min-width: 180px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    
+    transform-origin: bottom center; 
+    animation: growFromMarker 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+body.dark-theme .animated-popup {
+    background-color: #1f2937;
+    color: white !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
