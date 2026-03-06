@@ -70,48 +70,48 @@ function initMap() {
 
 async function fetchMarkerData() {
   try {
-    // Only fetch from the single combined data endpoint now!
-    const dataResponse = await fetch("/api/data");
+    // 1. Fetch from your teammate's new endpoint.
+    // (Assuming their server runs on port 3000 locally)
+    const dataResponse = await fetch("http://localhost:3000/wc");
     const locationsData = await dataResponse.json();
 
     locationsData.forEach((place) => {
       const marker = new google.maps.Marker({
         position: { lat: place.lat, lng: place.lng },
         map: map,
-        title: place.title,
+        title: place.building, // Data uses 'building' now instead of 'title'
       });
 
       marker.addListener("click", () => {
-        // If they click the exact same marker, do nothing
         if (activeMarker === marker) return;
+        if (activeMarker) activeMarker.setAnimation(null);
 
-        // 1. Stop animation on the previous marker (if any)
-        if (activeMarker) {
-          activeMarker.setAnimation(null);
-        }
-
-        // 2. Make the newly clicked marker bounce once
         marker.setAnimation(google.maps.Animation.BOUNCE);
         setTimeout(() => {
-          marker.setAnimation(null); // Stop bouncing after 750ms
+          marker.setAnimation(null);
         }, 750);
 
-        // 3. Setup the data directly from the place object!
-        const openTime = place.openTime || "No info available";
-        const description = place.description || ""; // Grabs the new description field!
+        // 2. Map the new properties from wcList.json
+        const buildingName = place.building || "Unknown Building";
+        const openTime = place.operatingHours || "No info available";
+        const floor = place.floor || "N/A";
+        const note = place.note ? `⚠️ ${place.note}` : "";
         const openWord = translations[currentLang]
           ? translations[currentLang]["open"]
           : "Open:";
 
-        // 4. Build the HTML string (Now includes the description text)
+        // 3. Update the popup HTML to show the new details cleanly
         const contentString = `
             <div class="animated-popup">
-                <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">${place.title}</h3>
+                <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">${buildingName}</h3>
                 <p style="margin: 0 0 4px 0; font-size: 14px; color: #6b7280;">
                     🕒 <strong>${openWord}</strong> ${openTime}
                 </p>
-                <p style="margin: 0; font-size: 13px; color: #4b5563;">
-                    ${description}
+                <p style="margin: 0 0 4px 0; font-size: 13px; color: #4b5563;">
+                    🏢 <strong>Floor:</strong> ${floor}
+                </p>
+                <p style="margin: 0; font-size: 13px; color: #eab308; font-weight: 500;">
+                    ${note}
                 </p>
             </div>
         `;
@@ -123,7 +123,7 @@ async function fetchMarkerData() {
 
       allMarkers.push({
         markerObject: marker,
-        title: place.title.toLowerCase(),
+        title: place.building.toLowerCase(), // Update search logic to use building name
       });
     });
   } catch (error) {

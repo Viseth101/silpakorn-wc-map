@@ -6,7 +6,7 @@
     "note": "staff only",
     "floor": 1,
     "lat": 13.819161752429082,
-    "lng":100.04126661117972
+    "lng": 100.04126661117972
   },
   {
     "id": 2,
@@ -23,7 +23,16 @@
     "operatingHours": "08:00 - 10:00",
     "note": "staff only",
     "floor": 1,
-    "lat": 13.819969232087898, 
+    "lat": 13.819969232087898,
     "lng": 100.04102347204727
+  },
+  {
+    "id": 4,
+    "building": "New Cafe",
+    "operatingHours": "Not specified",
+    "note": "User submitted - Pending review",
+    "floor": "N/A",
+    "lat": 13.82018044123707,
+    "lng": 100.03997420364557
   }
 ]
