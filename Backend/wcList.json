@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "building": "Science Building 1",
+    "operatingHours": "08:00 - 10:00",
+    "note": "staff only",
+    "floor": 1,
+    "lat": 13.819161752429082,
+    "lng":100.04126661117972
+  },
+  {
+    "id": 2,
+    "building": "อาคารเรียนรวม(รวท.) คณะวิทยาศาสตร์",
+    "operatingHours": "08:00 - 10:00",
+    "note": "staff and student",
+    "floor": 1,
+    "lat": 13.819767314399943,
+    "lng": 100.04054300484385
+  },
+  {
+    "id": 3,
+    "building": "Science Building 3",
+    "operatingHours": "08:00 - 10:00",
+    "note": "staff only",
+    "floor": 1,
+    "lat": 13.819969232087898, 
+    "lng": 100.04102347204727
+  }
+]
