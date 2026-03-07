@@ -3,43 +3,48 @@
     "id": 1,
     "building": "Science Building 1",
     "operatingHours": "08:00 - 10:00",
-    "note": "staff only",
+    "note": "-",
+    "access": "student and staff",
     "lat": 13.81925720249263, 
     "lng": 100.04134795354024,
-    "img": "../Backend/image/RorVorThor.png"
+    "img": "../Backend/image/Science_b1.png"
   },
   {
     "id": 2,
     "building": "Science Building 2",
     "operatingHours": "08:00 - 10:00",
-    "note": "staff only",
+    "note": "-",
+    "access": "student and staff",
     "lat": 13.81911389343137, 
     "lng": 100.04067644474276,
-    "img": "../Backend/image/RorVorThor.png"
+    "img": "../Backend/image/Default_img.png"
   },
   {
     "id": 3,
     "building": "Science Building 3",
-    "operatingHours": "08:00 - 10:00",
-    "note": "staff only",
+    "operatingHours": "24h",
+    "note": "-",
+    "access": "student and staff",
     "lat": 13.820056095281197, 
     "lng": 100.04085615276648,
-    "img": "../Backend/image/RorVorThor.png"
+    "img": "../Backend/image/Science_b3.png"
   },
   {
     "id": 4,
     "building": "Science Building 4",
-    "operatingHours": "08:00 - 10:00",
-    "note": "staff only",
+    "operatingHours": "08:00 - 20:00",
+    "note": "-",
+    "access": "student and staff",
     "lat": 13.82039988634533, 
     "lng": 100.04063872475282,
-    "img": "../Backend/image/RorVorThor.png"
+    "img": "../Backend/image/Default_img.png"
   },
   {
     "id": 5,
     "building": "Integrated Learning Building (RWT), Faculty of Science",
     "operatingHours": "08:00 - 10:00",
-    "note": "staff and student",
+    "note": "-",
+    "access": "student and staff",
     "lat": 13.81987443181979, 
     "lng": 100.04054973555881,
     "img": "../Backend/image/RorVorThor.png"
@@ -48,99 +53,280 @@
     "id": 6,
     "building": "Petcharat Restroom",
     "operatingHours": "08:00 - 10:00",
-    "note": "South",
+    "note": "-",
+    "access": "Anyone",
     "lat": 13.820689650924594, 
     "lng": 100.03959199108897,
-    "img": "../Backend/image/RorVorThor.png"
+    "img": "../Backend/image/Default_img.png"
   },
   {
     "id": 7,
     "building": "Petcharat Restroom",
     "operatingHours": "08:00 - 10:00",
-    "note": "North",
+    "note": "-",
+    "access": "Anyone",
     "lat": 13.821249785152679, 
     "lng": 100.03949526144609,
-    "img": "../Backend/image/RorVorThor.png"
+    "img": "../Backend/image/Default_img.png"
   },
   {
     "id": 8,
     "building": "Small Gym WC",
     "operatingHours": "08:00 - 10:00",
-    "note": "staff and student",
+    "note": "-",
+    "access": "student and staff",
     "lat": 13.821208607711673, 
     "lng": 100.03919435359857,
-    "img": "../Backend/image/RorVorThor.png"
+    "img": "../Backend/image/Default_img.png"
   },
   {
     "id": 9,
     "building": "Male Dormitory 3 wc",
     "operatingHours": "08:00 - 10:00",
-    "note": "staff and student",
+    "note": "-",
+    "access": "student and staff",
     "lat": 13.821815772281989, 
     "lng": 100.03945231931654,
-    "img": "../Backend/image/RorVorThor.png"
+    "img": "../Backend/image/MaleDormitory3.png"
   },
   {
     "id": 10,
     "building": "Female Dormitory 1 wc",
     "operatingHours": "08:00 - 10:00",
-    "note": "staff and student",
+    "note": "-",
+    "access": "student and staff",
     "lat": 13.822139100395407, 
     "lng": 100.0412222519012,
-    "img": "../Backend/image/RorVorThor.png"
+    "img": "../Backend/image/FemaleDormitory1.png"
   },
   {
     "id": 11,
     "building": "Female Dormitory 2 wc",
     "operatingHours": "08:00 - 10:00",
-    "note": "staff and student",
+    "note": "-",
+    "access": "student and staff",
     "lat": 13.821920319110447,
     "lng": 100.04046050450113,
-    "img": "../Backend/image/RorVorThor.png"
+    "img": "../Backend/image/FemaleDormitory2.png"
   },
   {
     "id": 12,
     "building": "Female Dormitory 3 wc",
     "operatingHours": "08:00 - 10:00",
-    "note": "staff and student",
+    "note": "-",
+    "access": "student and staff",
     "lat": 13.82116695467575, 
     "lng": 100.04065898795554,
-    "img": "../Backend/image/RorVorThor.png"
+    "img": "../Backend/image/Default_img.png"
   },
   {
     "id": 13,
     "building": "Female Dormitory 4 wc",
     "operatingHours": "08:00 - 10:00",
-    "note": "staff and student",
+    "note": "-",
+    "access": "student and staff",
     "lat": 13.82144108324026, 
     "lng": 100.04026336213978,
-    "img": "../Backend/image/RorVorThor.png"
+    "img": "../Backend/image/Default_img.png"
   },
   {
     "id": 14,
     "building": "Female Dormitory 5 wc",
     "operatingHours": "08:00 - 10:00",
-    "note": "staff and student",
+    "note": "-",
+    "access": "student and staff",
     "lat": 13.821568363605499, 
     "lng": 100.0413355976273,
-    "img": "../Backend/image/RorVorThor.png"
+    "img": "../Backend/image/Default_img.png"
   },
   {
     "id": 15,
     "building": "Female Dormitory 6 wc",
     "operatingHours": "08:00 - 10:00",
-    "note": "staff and student",
+    "note": "-",
+    "access": "student and staff",
     "lat": 13.822082109359206, 
     "lng": 100.04008602350304,
-    "img": "../Backend/image/RorVorThor.png"
+    "img": "../Backend/image/Default_img.png"
   },
   {
     "id": 16,
     "building": "Female Dormitory 7 wc",
     "operatingHours": "08:00 - 10:00",
-    "note": "staff and student",
+    "note": "-",
+    "access": "student and staff",
     "lat": 13.821268213140643, 
     "lng": 100.04139233100277,
-    "img": "../Backend/image/RorVorThor.png"
+    "img": "../Backend/image/FemaleDormitory7.png"
+  },
+  {
+    "id": 17,
+    "building": "Bathroom in Library",
+    "operatingHours": "08:00 - 10:00",
+    "note": "-",
+    "access": "student and staff",
+    "lat": 13.819639171715098, 
+    "lng": 100.03946436468604,
+    "img": "../Backend/image/Library.png"
+  },
+  {
+    "id": 18,
+    "building": "Male Bathroom at BDT",
+    "operatingHours": "08:00 - 10:00",
+    "note": "-",
+    "access": "Anyone (Male)",
+    "lat": 13.819233052549876, 
+    "lng": 100.03946643322058,
+    "img": "../Backend/image/DigitalBuilding.png"
+  },
+  {
+    "id": 19,
+    "building": "Felmale Bathroom at BDT",
+    "operatingHours": "08:00 - 10:00",
+    "note": "-",
+    "access": "Anyone (Female)",
+    "lat": 13.819115940148139, 
+    "lng": 100.03949352108941,
+    "img": "../Backend/image/DigitalBuilding.png"
+  },
+  {
+    "id": 20,
+    "building": "Bathroom in 15 floors Buiding",
+    "operatingHours": "08:00 - 10:00",
+    "note": "-",
+    "access": "student and staff",
+    "lat": 13.8202117523388, 
+    "lng": 100.03881197426207,
+    "img": "../Backend/image/15FloorsBuilding.png"
+  },
+  {
+    "id": 21,
+    "building": "Bathroom at Pharmacy Faculty",
+    "operatingHours": "08:00 - 10:00",
+    "note": "-",
+    "access": "student and staff",
+    "lat": 13.817816198010236, 
+    "lng": 100.03844915561548,
+    "img": "../Backend/image/FacultyOfPharmacy.png"
+  },
+  {
+    "id": 22,
+    "building": "Bathroom at Pharmacy Faculty",
+    "operatingHours": "08:00 - 10:00",
+    "note": "-",
+    "access": "student and staff",
+    "lat": 13.818505444109295, 
+    "lng": 100.03928670563602,
+    "img": "../Backend/image/FacultyOfPharmacyNearLibrary.png"
+  },
+  {
+    "id": 23,
+    "building": "Bathroom at Faculty of Art",
+    "operatingHours": "08:00 - 10:00",
+    "note": "-",
+    "access": "student and staff",
+    "lat": 13.816382197610828, 
+    "lng": 100.03983014509755,
+    "img": "../Backend/image/FacultyOfArt.png"
+  },
+  {
+    "id": 24,
+    "building": "Bathroom near main Gate",
+    "operatingHours": "08:00 - 10:00",
+    "note": "-",
+    "access": "student and staff",
+    "lat": 13.81481864475441,  
+    "lng": 100.04082780737717,
+    "img": "../Backend/image/Default_img.png"
+  },
+  {
+    "id": 25,
+    "building": "Bathroom at Education Faculty 1",
+    "operatingHours": "08:00 - 10:00",
+    "note": "-",
+    "access": "student and staff",
+    "lat": 13.81778379423882,  
+    "lng": 100.04365056879705,
+    "img": "../Backend/image/Default_img.png"
+  },
+  {
+    "id": 26,
+    "building": "Bathroom at Education Faculty 2",
+    "operatingHours": "08:00 - 10:00",
+    "note": "-",
+    "access": "student and staff",
+    "lat": 13.816855364981945,  
+    "lng": 100.04447843800985,
+    "img": "../Backend/image/Default_img.png"
+  },
+  {
+    "id": 27,
+    "building": "Male Dormitory 1",
+    "operatingHours": "08:00 - 10:00",
+    "note": "-",
+    "access": "student and staff",
+    "lat": 13.81840177152666,  
+    "lng": 100.04368266170185,
+    "img": "../Backend/image/Default_img.png"
+  },
+  {
+    "id": 28,
+    "building": "Male Dormitory 2",
+    "operatingHours": "08:00 - 10:00",
+    "note": "-",
+    "access": "student and staff",
+    "lat": 13.818559243409894, 
+    "lng": 100.04317808183349,
+    "img": "../Backend/image/Default_img.png"
+  },
+  {
+    "id": 29,
+    "building": "Bathroom at Faculty of Decorative Arts",
+    "operatingHours": "08:00 - 10:00",
+    "note": "-",
+    "access": "student and staff",
+    "lat": 13.822191702457541, 
+    "lng": 100.03691765848231 ,
+    "img": "../Backend/image/FacultyOfDecorativeArt1.png"
+  },
+  {
+    "id": 30,
+    "building": "Bathroom at Faculty of Decorative Arts",
+    "operatingHours": "08:00 - 10:00",
+    "note": "-",
+    "access": "student and staff",
+    "lat": 13.823115267487708, 
+    "lng": 100.04042422062807,
+    "img": "../Backend/image/FacultyOfDecorativeArt2.png"
+  },
+  {
+    "id": 31,
+    "building": "Bathroom at Faculty of Engineering",
+    "operatingHours": "08:00 - 10:00",
+    "note": "-",
+    "access": "student and staff",
+    "lat": 13.820201025581403, 
+    "lng": 100.03771784416088,
+    "img": "../Backend/image/FacultyOfEngineering.png"
+  },
+  {
+    "id": 32,
+    "building": "Bathroom at Buiding Kathak",
+    "operatingHours": "08:00 - 10:00",
+    "note": "-",
+    "access": "Anyone",
+    "lat": 13.818522181115364, 
+    "lng": 100.039906572564 ,
+    "img": "../Backend/image/Default_img.png"
+  },
+  {
+    "id": 32,
+    "building": "Bathroom at Union Cafetiria",
+    "operatingHours": "08:00 - 10:00",
+    "note": "-",
+    "access": "Anyone",
+    "lat": 13.818024780614277,  
+    "lng": 100.0399865234237,
+    "img": "../Backend/image/UnionCafetiria.png"
   }
 ]
