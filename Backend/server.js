@@ -393,4 +393,5 @@ app.post("/api/admin-add-place", upload.single('image'), async (req, res) => {
     } catch (err) { res.status(500).json({ error: "Server error adding place." }); }
 });
 
-app.listen(3000, () => { console.log("Server is running on port 3000"); });
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => { console.log(`Server is running on port ${PORT}`); });
