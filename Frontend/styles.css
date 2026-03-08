@@ -4,6 +4,52 @@
 html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
 #map { width: 100vw; height: 100vh; background-color: #e5e3df; }
 
+/* simple fullscreen loader used during async operations */
+.loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20000;
+}
+.loader-spinner {
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #1b3899;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+
+/* Khmer-specific font override (moved from inline <style> in index.html) */
+body.lang-kh { font-family: 'Battambang', sans-serif !important; }
+body.lang-kh input,
+body.lang-kh select,
+body.lang-kh button,
+body.lang-kh textarea,
+body.lang-kh label,
+body.lang-kh span,
+body.lang-kh p,
+body.lang-kh h1,
+body.lang-kh h2,
+body.lang-kh h3,
+body.lang-kh h4,
+body.lang-kh h5 {
+    font-family: 'Battambang', sans-serif !important;
+}
+body.lang-kh .modal-content *,
+body.lang-kh .filter-popup *,
+body.lang-kh .animated-popup * {
+    font-family: 'Battambang', sans-serif !important;
+}
+
 /* ========================================== */
 /* 2. MAP CONTROL BOXES (DESKTOP)             */
 /* ========================================== */
@@ -35,7 +81,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahom
 /* ========================================== */
 /* 4. TOGGLES & INPUTS                        */
 /* ========================================== */
-.toggle-label { display: flex; align-items: center; justify-content: space-between; gap: 15px; cursor: pointer; font-size: 0.9rem; font-weight: 500; width: 100%; line-height: normal; /* Fixes Khmer "squished" clash with toggles */}
+.toggle-label { display: flex; align-items: center; justify-content: space-between; gap: 15px; cursor: pointer; font-size: 0.9rem; font-weight: 500; width: 100%; line-height: 1.6; /* Increased from 'normal' to prevent Khmer/Thai overlap */}
 .toggle-wrapper { position: relative; width: 40px; height: 24px; flex-shrink: 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border-width: 0; }
 .toggle-track { display: block; width: 100%; height: 100%; background-color: #d1d5db; border-radius: 999px; transition: 0.3s; }
@@ -52,7 +98,7 @@ input[type="checkbox"]:checked ~ .toggle-dot { transform: translateX(16px); }
 .checkbox-container span { line-height: 1; margin: 0; }
 
 .time-range-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
-.time-picker { flex: 1; min-width: 0; padding: 8px 4px; border-radius: 6px; border: 1px solid #d1d5db; font-family: inherit; font-size: 13px; }
+.time-picker { flex: 1; min-width: 80px; padding: 10px 8px; border-radius: 6px; border: 1px solid #d1d5db; font-family: inherit; font-size: 13px; }
 
 /* ========================================== */
 /* 5. MENUS, POPUPS & AUTOCOMPLETE            */
@@ -106,6 +152,18 @@ button.gm-ui-hover-effect { display: none !important; }
 .gm-style-iw-tc { display: none !important; }
 .gm-style img { outline: none !important; border: none !important; }
 
+/* IMAGE STYLING IN POPUPS */
+.animated-popup-img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: block;
+    background-color: #f3f4f6; /* Placeholder color for broken images */
+}
+
 @keyframes growFromMarker { 0% { opacity: 0; transform: scale(0); } 100% { opacity: 1; transform: scale(1); } }
 .animated-popup { padding: 16px; min-width: 180px; background-color: white; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); transform-origin: bottom center; animation: growFromMarker 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 
@@ -157,6 +215,12 @@ body.dark-theme .hamburger-btn { background: #374151; color: white; }
     .top-right-search input { width: 100%; box-sizing: border-box; }
     .hamburger-btn { position: absolute; bottom: 30px; left: 15px; z-index: 20; background: white; padding: 12px 15px; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
     .legend-control { bottom: 90px; left: 15px; }
+    .toggle-label { 
+        font-size: 0.80rem; /* Slightly reduce size on mobile */
+        gap: 8px; 
+        line-height: 1.5; /* Maintain spacing for tall scripts */
+        white-space: normal; /* Allow wrapping for Khmer */
+    }
     .bottom-left-controls { flex-direction: column; width: auto; min-width: 180px; right: auto; align-items: stretch; gap: 12px; bottom: 90px; left: 15px; transform: translateY(20px) scale(0.9); opacity: 0; visibility: hidden; z-index: 20; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     .bottom-left-controls.menu-expanded { transform: translateY(0) scale(1); opacity: 1; visibility: visible; }
     #lang-select { margin-left: 0; width: 100%; min-width: unset; }

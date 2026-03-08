@@ -26,6 +26,7 @@ const campusBounds = {
 window.onload = startApp;
 
 async function startApp() {
+  showLoading();
   await loadTranslations();
   try {
     const response = await fetch("/api/config");
@@ -38,10 +39,12 @@ async function startApp() {
     script.defer = true;
     document.head.appendChild(script);
 
-    // ADD THIS LINE HERE:
+    // photo click listener does not depend on map, register immediately
     setupPhotoClickEvents();
   } catch (error) {
     console.error("Map loading failed:", error);
+    showToast("Unable to load map, please try again later.", "error");
+    hideLoading();
   }
 }
 
@@ -84,6 +87,10 @@ function showToast(message, type = "success") {
   }, 3000);
 }
 
+// simple loader helpers
+function showLoading() { document.getElementById("loader").style.display = "flex"; }
+function hideLoading() { document.getElementById("loader").style.display = "none"; }
+
 // ==========================================
 // NEW: ROBUST ACCESS CHECKER (ALL LANGUAGES)
 // ==========================================
@@ -91,8 +98,18 @@ function checkAccessRole(accessText) {
   if (!accessText) return "all";
   const text = accessText.toLowerCase();
 
+  // Staff terms in different languages
   const staffTerms = ["staff", "เฉพาะบุคลากร", "仅限员工", "បុគ្គលិក"];
-  const studentTerms = ["student", "เฉพาะนักศึกษา", "仅限学生", "សិស្ស"];
+  
+  // Student terms in different languages
+  const studentTerms = [
+    "student",                    // English: "Students only"
+    "เฉพาะนักศึกษา",             // Thai: Alternative student term
+    "นักศึกษาเท่านั้น",          // Thai: Actual term in database  
+    "นักศึกษา",                   // Thai: Simplified student term
+    "仅限学生",                   // Chinese
+    "សិស្ស"                       // Khmer
+  ];
 
   if (staffTerms.some((term) => text.includes(term.toLowerCase())))
     return "staff";
@@ -106,6 +123,7 @@ function checkAccessRole(accessText) {
 // 3. DATA FETCHING & MARKER CREATION
 // ==========================================
 async function fetchMarkerData(lang = "en") {
+  showLoading();
   try {
     allMarkers.forEach((item) => item.markerObject.setMap(null));
     allMarkers = [];
@@ -113,8 +131,12 @@ async function fetchMarkerData(lang = "en") {
     const dataResponse = await fetch(`/wc?lang=${lang}`);
     const locationsData = await dataResponse.json();
 
+    // compute current minutes once for performance
+    const now = new Date();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+
     locationsData.forEach((place) => {
-      const pinColor = getMarkerColor(place);
+      const pinColor = getMarkerColor(place, currentMins);
       const marker = new google.maps.Marker({
         position: { lat: place.lat, lng: place.lng },
         map: map,
@@ -150,9 +172,23 @@ async function fetchMarkerData(lang = "en") {
             translations[currentLang]?.["statusStudent"] || "Students Only";
 
         const placeNote = place.note || place.notes || "";
+        
+        // SECURITY FIX: Escape note text for safe HTML injection
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+        
         let noteHTML = "";
         if (placeNote && !placeNote.toLowerCase().includes("pending review")) {
-          noteHTML = `<p style="margin: 4px 0 0 0; font-size: 13px; color: #6b7280;">📝 <strong>${noteLabel}</strong> ${placeNote}</p>`;
+            const escapedNote = escapeHtml(placeNote);
+            noteHTML = `<p style="margin: 4px 0 0 0; font-size: 13px; color: #6b7280;">📝 <strong>${noteLabel}</strong> ${escapedNote}</p>`;
         }
 
         const isPending =
@@ -167,7 +203,7 @@ async function fetchMarkerData(lang = "en") {
           cleanImgPath = place.img.replace("../Backend/image/", "/image/");
         }
 
-        const imgHTML = `<img src="${cleanImgPath}" onerror="this.src='/image/Default_img.png'" style="width: 100%; height: 140px; object-fit: cover; object-position: center; border-radius: 8px; margin-bottom: 10px; display: block;" alt="WC Image">`;
+        const imgHTML = `<img src="${cleanImgPath}" alt="Restroom Image" onerror="this.src='/image/Default_img.png'; this.style.backgroundColor='#e5e7eb';" class="animated-popup-img">`;
 
         const contentString = `
                     <div class="animated-popup">
@@ -196,6 +232,9 @@ async function fetchMarkerData(lang = "en") {
     applyFilters();
   } catch (error) {
     console.error("Error loading marker data:", error);
+    showToast("Unable to fetch restroom data.", "error");
+  } finally {
+    hideLoading();
   }
 }
 
@@ -219,7 +258,7 @@ function createPin(color) {
   };
 }
 
-function getMarkerColor(place) {
+function getMarkerColor(place, currentMins = null) {
   const role = checkAccessRole(place.access || place.note || place.notes || "");
   if (role === "staff") return "#f59e0b"; // Orange
   if (role === "student") return "#3b82f6"; // Blue
@@ -231,8 +270,10 @@ function getMarkerColor(place) {
     const [mFrom, mTo] = hours.split("-").map((s) => s.trim());
     const startMins = timeToMins(mFrom);
     const endMins = timeToMins(mTo);
-    const now = new Date();
-    const currentMins = now.getHours() * 60 + now.getMinutes();
+    if (currentMins === null) {
+      const now = new Date();
+      currentMins = now.getHours() * 60 + now.getMinutes();
+    }
 
     if (endMins < startMins) {
       if (currentMins >= startMins || currentMins <= endMins) return "#10b981";
@@ -323,6 +364,11 @@ function setupMobileAndFilterListeners() {
     filterPopup.classList.remove("active");
     applyFilters();
   });
+
+  // new: search input listener moved from inline attribute
+  document
+    .getElementById("searchInput")
+    .addEventListener("input", handleSearchInput);
 
   document.addEventListener("click", (e) => {
     if (filterPopup.classList.contains("active")) {
@@ -592,6 +638,9 @@ document.getElementById("confirmMarkerBtn").addEventListener("click", () => {
 document
   .getElementById("submitPlaceBtn")
   .addEventListener("click", async () => {
+    const submitBtn = document.getElementById("submitPlaceBtn");
+    submitBtn.disabled = true;
+
     const title = document.getElementById("placeTitle").value;
     const access = document.getElementById("placeAccess").value;
     const note = document.getElementById("placeNote").value;
@@ -601,9 +650,16 @@ document
     else if (placeTimeFrom.value && placeTimeTo.value)
       openTime = `${placeTimeFrom.value} - ${placeTimeTo.value}`;
 
-    if (!title) return showToast("Please enter a WC name.", "error");
-    if (!newPlaceCoords)
-      return showToast("Please pick a location on the map.", "error");
+    if (!title) {
+      showToast("Please enter a WC name.", "error");
+      submitBtn.disabled = false;
+      return;
+    }
+    if (!newPlaceCoords) {
+      showToast("Please pick a location on the map.", "error");
+      submitBtn.disabled = false;
+      return;
+    }
 
     const payload = {
       title,
@@ -628,11 +684,16 @@ document
         );
         addPlaceModal.classList.remove("active");
         resetForm();
-      } else showToast("Failed to submit WC.", "error");
+      } else {
+        const errText = await response.text();
+        showToast(`Failed to submit WC. ${errText}`, "error");
+      }
     } catch (error) {
       console.error("Error submitting:", error);
       showToast("Failed to submit WC.", "error");
     }
+
+    submitBtn.disabled = false;
   });
 
 function resetForm() {

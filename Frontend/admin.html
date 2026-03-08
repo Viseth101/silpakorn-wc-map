@@ -422,8 +422,7 @@
     <div id="loginOverlay">
         <div class="modal-box" style="text-align: center;">
             <h2>Admin Login</h2>
-            <input type="password" id="adminPassword" placeholder="Enter Admin Password"
-                onkeypress="if(event.key === 'Enter') login()">
+            <input type="password" id="adminPassword" placeholder="Enter Admin Password">
             <button class="btn-primary" style="width: 100%;" onclick="login()">Unlock Dashboard</button>
         </div>
     </div>
@@ -455,10 +454,10 @@
             </label>
             <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center;">
                 <input type="time" id="editTimeFrom"
-                    style="flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                    style="flex: 1; padding: 10px 8px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 80px;">
                 <span>to</span>
                 <input type="time" id="editTimeTo"
-                    style="flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                    style="flex: 1; padding: 10px 8px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 80px;">
             </div>
 
             <label>Access:</label>
@@ -504,10 +503,10 @@
             </label>
             <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center;">
                 <input type="time" id="addTimeFrom"
-                    style="flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                    style="flex: 1; padding: 10px 8px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 80px;">
                 <span>to</span>
                 <input type="time" id="addTimeTo"
-                    style="flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                    style="flex: 1; padding: 10px 8px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 80px;">
             </div>
 
             <label>Access:</label>
@@ -563,9 +562,9 @@
                 </label>
                 <div class="admin-time-row">
                     <span style="font-size:12px; color:#6b7280; font-weight:bold;">Or open during:</span>
-                    <input type="time" id="adminTimeFrom" style="padding:4px; flex:1;" onchange="applyAdminFilters()">
+                    <input type="time" id="adminTimeFrom" style="padding:8px; flex:1; min-width:80px; border: 1px solid #d1d5db; border-radius: 6px;" onchange="applyAdminFilters()">
                     <span>-</span>
-                    <input type="time" id="adminTimeTo" style="padding:4px; flex:1;" onchange="applyAdminFilters()">
+                    <input type="time" id="adminTimeTo" style="padding:8px; flex:1; min-width:80px; border: 1px solid #d1d5db; border-radius: 6px;" onchange="applyAdminFilters()">
                 </div>
             </div>
 
@@ -618,6 +617,11 @@
                 } else { showToast("Incorrect password!", "error"); }
             } catch (e) { console.error("Login error", e); }
         }
+
+        // wire up enter key after DOM creation
+        document.getElementById("adminPassword").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") login();
+        });
 
         async function initAdminMap() {
             try {
@@ -694,8 +698,19 @@
         function checkAccessRole(accessText) {
             if (!accessText) return "all";
             const text = accessText.toLowerCase();
+            
+            // Staff terms in different languages
             const staffTerms = ["staff", "เฉพาะบุคลากร", "仅限员工", "បុគ្គលិក"];
-            const studentTerms = ["student", "เฉพาะนักศึกษา", "仅限学生", "សិស្ស"];
+            
+            // Student terms in different languages  
+            const studentTerms = [
+                "student",                    // English: "Students only"
+                "เฉพาะนักศึกษา",             // Thai: Alternative student term
+                "นักศึกษาเท่านั้น",          // Thai: Actual term in database
+                "นักศึกษา",                   // Thai: Simplified student term
+                "仅限学生",                   // Chinese
+                "សិស្ស"                       // Khmer
+            ];
 
             if (staffTerms.some(term => text.includes(term.toLowerCase()))) return "staff";
             if (studentTerms.some(term => text.includes(term.toLowerCase()))) return "student";
@@ -754,14 +769,24 @@
                 if (currentTab === 'pending') {
                     color = "#eab308"; // Standard pending color
                 } else {
-                    // FIX: Standardize colors using role logic
-                    // Use same agnostic checker as cleint side (we need to bring it here if not present, otherwise use server result if sent)
-                    // Assuming checkAccessRole is available in global scope of script.js from previous steps
+                    // Use consistent color logic with client side
                     const role = checkAccessRole(place.access || place.note || place.notes || "");
-                    if (role === "staff") color = "#f59e0b"; // Staff = Orange
-                    else if (role === "student") color = "#3b82f6"; // Student = Blue
-                    // Open 24h = green is handled by default and checkAccessRole falling through to All
-                    else if (place.operatingHours && !place.operatingHours.toLowerCase().includes('24')) color = "#3b82f6"; // Closed by default
+                    if (role === "staff") {
+                        color = "#f59e0b"; // Staff = Orange
+                    } else if (role === "student") {
+                        color = "#3b82f6"; // Student = Blue
+                    } else {
+                        // All access: check operating hours for current status
+                        const hours = (place.operatingHours || "").toLowerCase();
+                        if (hours.includes("24")) {
+                            color = "#10b981"; // 24h = Green
+                        } else if (hours.includes("-")) {
+                            // We don't have current time logic here, so assume open for all-access places
+                            color = "#10b981"; // Open = Green
+                        } else {
+                            color = "#9ca3af"; // Closed/Unknown = Gray
+                        }
+                    }
                 }
 
                 const svgIcon = `

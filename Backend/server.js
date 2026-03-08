@@ -1,7 +1,8 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const fs = require("fs");
+// use promise-based fs so we can await reads/writes
+const fs = require("fs").promises;
 const path = require("path");
 const app = express();
 
@@ -11,18 +12,36 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "../Frontend")));
 app.use("/image", express.static(path.join(__dirname, "image")));
 
+// simple campus boundary used for coordinate validation
+const CAMPUS_BOUNDS = { south: 13.812, north: 13.825, west: 100.034, east: 100.047 };
+function isWithinCampus(lat, lng) {
+  return (
+    lat >= CAMPUS_BOUNDS.south &&
+    lat <= CAMPUS_BOUNDS.north &&
+    lng >= CAMPUS_BOUNDS.west &&
+    lng <= CAMPUS_BOUNDS.east
+  );
+}
+
 function sanitizeInput(str) {
     if (!str) return "";
     return str.replace(/[&<>'"]/g, (tag) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"})[tag]);
 }
 
-const readJSON = (filePath) => {
-    if (!fs.existsSync(filePath)) return [];
-    try { return JSON.parse(fs.readFileSync(filePath, "utf-8")); } catch (e) { return []; }
-};
-const writeJSON = (filePath, data) => fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+// promise-based JSON helpers, swallow errors and return empty array by default
+async function readJSON(filePath) {
+    try {
+        const content = await fs.readFile(filePath, "utf-8");
+        return JSON.parse(content);
+    } catch (e) {
+        return [];
+    }
+}
+async function writeJSON(filePath, data) {
+    await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+}
 
-const ALL_LANGS = ["en", "th", "cn", "kh"];
+const ALL_LANGS = ["en", "cn", "kh", "th"];
 
 function detectLanguage(text) {
     if (/[\u1780-\u17FF]/.test(text)) return 'kh'; 
@@ -31,81 +50,140 @@ function detectLanguage(text) {
     return 'en'; 
 }
 
-// Ensure your access checking function also has these terms.
-// Find this function in your server.js and replace it.
 function checkAccessRole(accessText) {
     if (!accessText) return "all";
     const text = accessText.toLowerCase();
     
-    // Add exact terms you want to trigger Staff color
-    const staffTerms = ["staff only", "เฉพาะบุคลากร", "仅限员工", "សម្រាប់តែបុគ្គលិក"];
-    // Add exact terms you want to trigger Student color
-    const studentTerms = ["students only", "student only", "เฉพาะนักศึกษา", "仅限学生", "សម្រាប់តែសិស្ស"];
+    // Normalize Thai text for better matching
+    // Common staff indicators across languages
+    const staffTerms = [
+        "staff", 
+        "เฉพาะบุคลากร",
+        "仅限员工", 
+        "សម្រាប់តែបុគ្គលិក",
+        "บุคลากรเท่านั้น",
+        "พนักงาน"
+    ];
     
-    // Check staff first
-    if (staffTerms.some(term => text.includes(term.toLowerCase()))) return "staff";
+    // Common student indicators - MATCHING script.js exactly
+    const studentTerms = [
+        "student",
+        "students only",
+        "student only",
+        "เฉพาะนักศึกษา",           // Exact Thai term in database
+        "นักศึกษาเท่านั้น",        // Alternative Thai form
+        "นักศึกษา",               // Simplified Thai
+        "仅限学生",               // Chinese
+        "សម្រាប់តែសិស្ស",        // Khmer
+        "សិស្ស"                   // Khmer alternative
+    ];
     
-    // Check student second
-    if (studentTerms.some(term => text.includes(term.toLowerCase()))) return "student";
+    // Check staff first (higher priority)
+    if (staffTerms.some(term => text.includes(term.toLowerCase()))) {
+        return "staff";
+    }
     
-    // Default to All
+    // Then check student
+    if (studentTerms.some(term => text.includes(term.toLowerCase()))) {
+        return "student";
+    }
+    
+    // Default is all access
     return "all";
 }
 
-app.get("/api/config", (req, res) => { res.json({ mapsApiKey: process.env.GOOGLE_API_KEY }); });
+app.get("/api/config", (req, res) => {
+  res.json({ mapsApiKey: process.env.GOOGLE_API_KEY });
+});
 
 // NEW: Combines approved places with pending places for the public map
-app.get("/wc", (req, res) => {
-    const lang = req.query.lang || "en"; 
+app.get("/wc", async (req, res) => {
+    const lang = req.query.lang || "en";
     const safeLang = ALL_LANGS.includes(lang) ? lang : "en";
-    
-    // Load approved
-    const dataPath = path.join(__dirname, "Database", `place_data_${safeLang}.json`);
-    const approvedPlaces = readJSON(dataPath);
 
-    // Load pending
-    const pendingPath = path.join(__dirname, "Database", "pending_places.json");
-    const pendingData = readJSON(pendingPath);
-    
-    // Format pending data to match the language currently requested
-    const formattedPending = pendingData.map(p => ({
-        ...p,
-        building: p.names ? (p.names[safeLang] || p.names.en) : p.building
+    // approved
+    const dataPath = path.join(__dirname, "Database", "place_data.json");
+    const allPlaces = await readJSON(dataPath);
+
+    const approvedPlaces = allPlaces.map((place) => ({
+        id: place.id,
+        building: place.building?.[safeLang] || "",
+        operatingHours: place.operatingHours?.[safeLang] || "",
+        notes: place.notes?.[safeLang] || "",
+        access: place.access?.[safeLang] || "",
+        lat: place.lat,
+        lng: place.lng,
+        img: place.img,
     }));
 
-    // Send both
+    const pendingPath = path.join(__dirname, "Database", "pending_places.json");
+    const pendingData = await readJSON(pendingPath);
+
+    const formattedPending = pendingData.map((p) => {
+        let buildingText = "Pending Place";
+        if (p.names && typeof p.names === "object") {
+            buildingText = p.names[safeLang] || p.names.en || buildingText;
+        } else if (typeof p.building === "string") {
+            buildingText = p.building;
+        }
+        return {
+            id: p.id,
+            building: buildingText,
+            operatingHours: p.operatingHours || "Not specified",
+            notes: p.note || "",
+            access: p.access || "All",
+            lat: p.lat,
+            lng: p.lng,
+            img: p.img,
+            isPending: true,
+        };
+    });
+
     res.json(approvedPlaces.concat(formattedPending));
 });
 
-app.post("/api/submit-place", (req, res) => {
+app.post("/api/submit-place", async (req, res) => {
     const rawTitle = sanitizeInput(req.body.title);
     const openTime = sanitizeInput(req.body.openTime);
     const access = sanitizeInput(req.body.access) || "ALL (Staff & Students)";
     const note = sanitizeInput(req.body.note) || "";
-    const { lat, lng } = req.body;
+    let { lat, lng } = req.body;
+
+    lat = parseFloat(lat);
+    lng = parseFloat(lng);
+
+    if (isNaN(lat) || isNaN(lng)) {
+        return res.status(400).json({ error: "Invalid coordinates" });
+    }
+    if (!isWithinCampus(lat, lng)) {
+        return res.status(400).json({ error: "Location must be within campus bounds" });
+    }
 
     const detectedLang = detectLanguage(rawTitle);
     const names = { en: rawTitle, th: rawTitle, cn: rawTitle, kh: rawTitle };
 
     const pendingPath = path.join(__dirname, "Database", "pending_places.json");
-    let pendingPlaces = readJSON(pendingPath);
-    
-    const enPlaces = readJSON(path.join(__dirname, "Database", "place_data_en.json"));
-    const nextId = enPlaces.length ? Math.max(...enPlaces.map((p) => p.id || 0)) + 1 : 1;
+    let pendingPlaces = await readJSON(pendingPath);
+
+    const approvedPath = path.join(__dirname, "Database", "place_data.json");
+    const approvedPlaces = await readJSON(approvedPath);
+    const nextId = approvedPlaces.length
+        ? Math.max(...approvedPlaces.map((p) => p.id || 0)) + 1
+        : 1;
 
     pendingPlaces.push({
         id: nextId,
-        names: names, 
+        names,
         operatingHours: openTime,
-        access: access,
-        note: note, 
+        access,
+        note,
         isPending: true,
-        lat: lat,
-        lng: lng,
-        detectedLang: detectedLang
+        lat,
+        lng,
+        detectedLang,
     });
 
-    writeJSON(pendingPath, pendingPlaces);
+    await writeJSON(pendingPath, pendingPlaces);
     res.status(200).json({ message: "Place saved and marked as pending!" });
 });
 
@@ -116,157 +194,217 @@ app.post("/api/admin-login", (req, res) => {
     else res.status(401).json({ success: false, error: "Incorrect password" });
 });
 
-app.get("/api/pending", (req, res) => { res.json(readJSON(path.join(__dirname, "Database", "pending_places.json"))); });
+app.get("/api/pending", async (req, res) => {
+    const pending = await readJSON(path.join(__dirname, "Database", "pending_places.json"));
+    res.json(pending);
+});
 
-app.get("/api/all-places", (req, res) => {
-    const enPlaces = readJSON(path.join(__dirname, "Database", "place_data_en.json"));
-    const thPlaces = readJSON(path.join(__dirname, "Database", "place_data_th.json"));
-    const cnPlaces = readJSON(path.join(__dirname, "Database", "place_data_cn.json"));
-    const khPlaces = readJSON(path.join(__dirname, "Database", "place_data_kh.json"));
+app.get("/api/all-places", async (req, res) => {
+    const dataPath = path.join(__dirname, "Database", "place_data.json");
+    const allPlaces = await readJSON(dataPath);
 
-    const merged = enPlaces.map(enPlace => {
-        const thP = thPlaces.find(p => p.id === enPlace.id) || {};
-        const cnP = cnPlaces.find(p => p.id === enPlace.id) || {};
-        const khP = khPlaces.find(p => p.id === enPlace.id) || {};
-        
-        return {
-            ...enPlace,
-            names: {
-                en: enPlace.building,
-                th: thP.building || enPlace.building,
-                cn: cnP.building || enPlace.building,
-                kh: khP.building || enPlace.building
-            }
-        };
-    });
+    const merged = allPlaces.map((place) => ({
+        ...place,
+        names: {
+            en: place.building.en,
+            cn: place.building.cn,
+            kh: place.building.kh,
+            th: place.building.th,
+        },
+        operatingHours:
+            typeof place.operatingHours === "object"
+                ? place.operatingHours.en
+                : place.operatingHours,
+        access:
+            typeof place.access === "object" ? place.access.en : place.access,
+        notes:
+            typeof place.notes === "object" ? place.notes.en : place.notes,
+    }));
     res.json(merged);
 });
 
-app.post("/api/approve", (req, res) => {
-    if (req.body.password !== ADMIN_PASSWORD) return res.status(401).json({ error: "Unauthorized" });
-    const { id } = req.body;
-    
-    const pendingPath = path.join(__dirname, "Database", "pending_places.json");
-    let pending = readJSON(pendingPath);
-    const placeToApprove = pending.find(p => p.id === id);
-    
-    if (placeToApprove) {
-        ALL_LANGS.forEach(lang => {
-            const filePath = path.join(__dirname, "Database", `place_data_${lang}.json`);
-            let places = readJSON(filePath);
-            places.push({
-                id: placeToApprove.id,
-                building: placeToApprove.names[lang],
-                operatingHours: placeToApprove.operatingHours,
-                access: placeToApprove.access,
-                notes: placeToApprove.note, 
-                lat: placeToApprove.lat,
-                lng: placeToApprove.lng
-            });
-            writeJSON(filePath, places);
-        });
+app.post("/api/approve", async (req, res) => {
+    if (req.body.password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
 
-        pending = pending.filter(p => p.id !== id);
-        writeJSON(pendingPath, pending);
-        res.status(200).json({ message: "Approved to all files!" });
+    const { id } = req.body;
+
+    const pendingPath = path.join(__dirname, "Database", "pending_places.json");
+    let pending = await readJSON(pendingPath);
+    const placeToApprove = pending.find((p) => p.id === id);
+
+    if (placeToApprove) {
+        const dataPath = path.join(__dirname, "Database", "place_data.json");
+        let places = await readJSON(dataPath);
+
+        const names = placeToApprove.names || {
+            en: placeToApprove.building || "Unnamed WC",
+            th: placeToApprove.building || "Unnamed WC",
+            cn: placeToApprove.building || "Unnamed WC",
+            kh: placeToApprove.building || "Unnamed WC",
+        };
+
+        const newPlace = {
+            id: placeToApprove.id,
+            lat: parseFloat(placeToApprove.lat),
+            lng: parseFloat(placeToApprove.lng),
+            ...(placeToApprove.img && { img: placeToApprove.img }),
+            building: {
+                en: sanitizeInput(names.en || names.en),
+                cn: sanitizeInput(names.cn || names.en),
+                kh: sanitizeInput(names.kh || names.en),
+                th: sanitizeInput(names.th || names.en),
+            },
+            operatingHours: {
+                en: sanitizeInput(placeToApprove.operatingHours || ""),
+                cn: sanitizeInput(placeToApprove.operatingHours || ""),
+                kh: sanitizeInput(placeToApprove.operatingHours || ""),
+                th: sanitizeInput(placeToApprove.operatingHours || ""),
+            },
+            notes: {
+                en: sanitizeInput(placeToApprove.note || ""),
+                cn: sanitizeInput(placeToApprove.note || ""),
+                kh: sanitizeInput(placeToApprove.note || ""),
+                th: sanitizeInput(placeToApprove.note || ""),
+            },
+            access: {
+                en: sanitizeInput(placeToApprove.access || "All"),
+                cn: sanitizeInput(placeToApprove.access || "所有人"),
+                kh: sanitizeInput(placeToApprove.access || "សាធារណៈ"),
+                th: sanitizeInput(placeToApprove.access || "ทุกคน"),
+            },
+        };
+
+        places.push(newPlace);
+        await writeJSON(dataPath, places);
+
+        pending = pending.filter((p) => p.id !== id);
+        await writeJSON(pendingPath, pending);
+
+        res.status(200).json({ message: "Approved and added to database!" });
     } else {
         res.status(404).json({ error: "Pending place not found." });
     }
 });
 
-app.post("/api/reject", (req, res) => {
-    if (req.body.password !== ADMIN_PASSWORD) return res.status(401).json({ error: "Unauthorized" });
+app.post("/api/reject", async (req, res) => {
+    if (req.body.password !== ADMIN_PASSWORD)
+        return res.status(401).json({ error: "Unauthorized" });
     const { id } = req.body;
-    
+
     const pendingPath = path.join(__dirname, "Database", "pending_places.json");
-    let pending = readJSON(pendingPath);
-    pending = pending.filter(p => p.id !== id);
-    writeJSON(pendingPath, pending);
+    let pending = await readJSON(pendingPath);
+    pending = pending.filter((p) => p.id !== id);
+    await writeJSON(pendingPath, pending);
 
-    ALL_LANGS.forEach(lang => {
-        const filePath = path.join(__dirname, "Database", `place_data_${lang}.json`);
-        let places = readJSON(filePath);
-        places = places.filter(p => p.id !== id);
-        writeJSON(filePath, places);
-    });
-
-    res.status(200).json({ message: "Deleted everywhere." });
+    res.status(200).json({ message: "Rejection removed from pending." });
 });
 
-app.post("/api/edit-place", (req, res) => {
-    if (req.body.password !== ADMIN_PASSWORD) return res.status(401).json({ error: "Unauthorized" });
+app.post("/api/edit-place", async (req, res) => {
+    if (req.body.password !== ADMIN_PASSWORD)
+        return res.status(401).json({ error: "Unauthorized" });
     const { id, names, operatingHours, access, note, lat, lng } = req.body;
 
     const safeEn = sanitizeInput(names.en);
     const finalNames = {
         en: safeEn,
-        th: sanitizeInput(names.th) || safeEn,
         cn: sanitizeInput(names.cn) || safeEn,
-        kh: sanitizeInput(names.kh) || safeEn
+        kh: sanitizeInput(names.kh) || safeEn,
+        th: sanitizeInput(names.th) || safeEn,
     };
 
-    ALL_LANGS.forEach(lang => {
-        const filePath = path.join(__dirname, "Database", `place_data_${lang}.json`);
-        let places = readJSON(filePath);
-        const index = places.findIndex(p => p.id === id);
-        if (index !== -1) {
-            places[index].building = finalNames[lang];
-            places[index].operatingHours = sanitizeInput(operatingHours);
-            places[index].access = sanitizeInput(access);
-            places[index].notes = sanitizeInput(note);
-            if (lat !== undefined) places[index].lat = parseFloat(lat);
-            if (lng !== undefined) places[index].lng = parseFloat(lng);
-            writeJSON(filePath, places);
-        }
-    });
+    const dataPath = path.join(__dirname, "Database", "place_data.json");
+    let places = await readJSON(dataPath);
+    const index = places.findIndex((p) => p.id === id);
+
+    if (index !== -1) {
+        places[index].building = finalNames;
+        places[index].operatingHours = {
+            en: sanitizeInput(operatingHours),
+            cn: sanitizeInput(operatingHours),
+            kh: sanitizeInput(operatingHours),
+            th: sanitizeInput(operatingHours),
+        };
+        places[index].access = {
+            en: sanitizeInput(access),
+            cn: sanitizeInput(access),
+            kh: sanitizeInput(access),
+            th: sanitizeInput(access),
+        };
+        places[index].notes = {
+            en: sanitizeInput(note),
+            cn: sanitizeInput(note),
+            kh: sanitizeInput(note),
+            th: sanitizeInput(note),
+        };
+        if (lat !== undefined) places[index].lat = parseFloat(lat);
+        if (lng !== undefined) places[index].lng = parseFloat(lng);
+        await writeJSON(dataPath, places);
+    }
 
     const pendingPath = path.join(__dirname, "Database", "pending_places.json");
-    let pending = readJSON(pendingPath);
-    const pIndex = pending.findIndex(p => p.id === id);
-    if(pIndex !== -1) {
+    let pending = await readJSON(pendingPath);
+    const pIndex = pending.findIndex((p) => p.id === id);
+    if (pIndex !== -1) {
         pending[pIndex].names = finalNames;
         pending[pIndex].operatingHours = sanitizeInput(operatingHours);
         pending[pIndex].access = sanitizeInput(access);
         pending[pIndex].note = sanitizeInput(note);
         if (lat !== undefined) pending[pIndex].lat = parseFloat(lat);
         if (lng !== undefined) pending[pIndex].lng = parseFloat(lng);
-        writeJSON(pendingPath, pending);
+        await writeJSON(pendingPath, pending);
     }
 
-    res.status(200).json({ message: "Place updated in all languages." });
+    res.status(200).json({ message: "Place updated successfully." });
 });
 
-app.post("/api/admin-add-place", (req, res) => {
-    if (req.body.password !== ADMIN_PASSWORD) return res.status(401).json({ error: "Unauthorized" });
+app.post("/api/admin-add-place", async (req, res) => {
+    if (req.body.password !== ADMIN_PASSWORD)
+        return res.status(401).json({ error: "Unauthorized" });
     const { names, operatingHours, access, note, lat, lng } = req.body;
 
     const safeEn = sanitizeInput(names.en);
     const finalNames = {
         en: safeEn,
-        th: sanitizeInput(names.th) || safeEn,
         cn: sanitizeInput(names.cn) || safeEn,
-        kh: sanitizeInput(names.kh) || safeEn
+        kh: sanitizeInput(names.kh) || safeEn,
+        th: sanitizeInput(names.th) || safeEn,
     };
 
-    const enPlaces = readJSON(path.join(__dirname, "Database", "place_data_en.json"));
-    const nextId = enPlaces.length ? Math.max(...enPlaces.map(p => p.id || 0)) + 1 : 1;
+    const dataPath = path.join(__dirname, "Database", "place_data.json");
+    let places = await readJSON(dataPath);
+    const nextId = places.length
+        ? Math.max(...places.map((p) => p.id || 0)) + 1
+        : 1;
 
-    ALL_LANGS.forEach(lang => {
-        const filePath = path.join(__dirname, "Database", `place_data_${lang}.json`);
-        let places = readJSON(filePath);
-        places.push({
-            id: nextId,
-            building: finalNames[lang],
-            operatingHours: sanitizeInput(operatingHours),
-            access: sanitizeInput(access) || "ALL (Staff & Students)",
-            notes: sanitizeInput(note) || "",
-            lat: parseFloat(lat),
-            lng: parseFloat(lng)
-        });
-        writeJSON(filePath, places);
+    places.push({
+        id: nextId,
+        lat: parseFloat(lat),
+        lng: parseFloat(lng),
+        building: finalNames,
+        operatingHours: {
+            en: sanitizeInput(operatingHours),
+            cn: sanitizeInput(operatingHours),
+            kh: sanitizeInput(operatingHours),
+            th: sanitizeInput(operatingHours),
+        },
+        access: {
+            en: sanitizeInput(access) || "All",
+            cn: sanitizeInput(access) || "所有人",
+            kh: sanitizeInput(access) || "សាធារណៈ",
+            th: sanitizeInput(access) || "ทุกคน",
+        },
+        notes: {
+            en: sanitizeInput(note) || "",
+            cn: sanitizeInput(note) || "",
+            kh: sanitizeInput(note) || "",
+            th: sanitizeInput(note) || "",
+        },
     });
 
-    res.status(200).json({ message: "Place added to all languages!" });
+    await writeJSON(dataPath, places);
+    res.status(200).json({ message: "Place added to database!" });
 });
 
 app.listen(3000, () => { console.log("Server is running on port 3000"); });
