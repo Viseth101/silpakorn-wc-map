@@ -53,9 +53,12 @@ const upload = multer({
 });
 
 app.use(cors());
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "../Frontend")));
+app.use(express.static(path.join(__dirname, "/Frontend")));
 app.use("/place_data_asset", express.static(ASSET_DIR));
 
 const CAMPUS_BOUNDS = { south: 13.812, north: 13.825, west: 100.034, east: 100.047 };
