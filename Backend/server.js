@@ -16,7 +16,7 @@ const submitLimiter = rateLimit({
     message: { error: "Too many submissions from this IP. Please try again in 15 minutes." }
 });
 
-const ASSET_DIR = path.join(__dirname, "place_data_asset");
+const ASSET_DIR = "/app/Database/place_data_asset";
 if (!require("fs").existsSync(ASSET_DIR)) {
     require("fs").mkdirSync(ASSET_DIR);
 }
@@ -123,7 +123,7 @@ app.get("/wc", async (req, res) => {
         const lang = req.query.lang || "en";
         const safeLang = ALL_LANGS.includes(lang) ? lang : "en";
 
-        const dataPath = path.join(__dirname, "Database", "place_data.json");
+        const dataPath = "/app/Database/place_data.json";
         const allPlaces = await readJSON(dataPath);
 
         const approvedPlaces = allPlaces.map((place) => {
@@ -137,7 +137,7 @@ app.get("/wc", async (req, res) => {
             };
         });
 
-        const pendingPath = path.join(__dirname, "Database", "pending_places.json");
+        const pendingPath = "/app/Database/pending_places.json";
         const pendingData = await readJSON(pendingPath);
 
         const formattedPending = pendingData.map((p) => {
