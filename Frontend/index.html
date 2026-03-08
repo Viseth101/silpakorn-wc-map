@@ -1,13 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title data-i18n="title">Silpakorn WC Map</title>
+    <link rel="icon" type="image/x-icon" href="./assets/silpakorn-icon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-    <h1>small change</h1>
+    <div id="loader" class="loader-overlay" style="display:none;">
+        <div class="loader-spinner"></div>
+    </div>
+
+    <div class="map-control top-left-logo">
+        <img src="./assets/silpakorn-icon.png" alt="Silpakorn Logo">
+        <strong data-i18n="navTitle">Silpakorn WC Map</strong>
+        <button id="mobileSearchToggle" class="mobile-only-btn" title="Search">🔍</button>
+    </div>
+
+    <div class="map-control top-right-search" id="searchContainer">
+        <div style="position: relative; display: flex; align-items: center; width: 100%;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder"
+                placeholder="Search restrooms...">
+            <span id="clearSearchBtn"
+                style="position: absolute; right: 40px; cursor: pointer; display: none; color: #9ca3af; font-size: 16px;">✖</span>
+            <button id="filterToggleBtn" class="filter-icon-btn" title="Filter by Time & Access">⏳</button>
+        </div>
+        <ul id="searchSuggestions" class="suggestions-list"></ul>
+
+        <div id="filterPopup" class="filter-popup">
+            <h4 style="margin-top: 0; font-size: 14px; margin-bottom: 12px;">Filter Restrooms</h4>
+
+            <label style="display: block; font-size: 13px; margin-bottom: 6px;">Access:</label>
+            <select id="filterAccess" class="form-control" style="padding: 6px; font-size: 13px; margin-bottom: 12px;">
+                <option value="any">Any Access</option>
+                <option value="all">All (Staff & Students)</option>
+                <option value="student">Students only</option>
+                <option value="staff">Staff only</option>
+            </select>
+
+            <label class="checkbox-container">
+                <input type="checkbox" id="filter24h">
+                <span>Open 24h Only</span>
+            </label>
+            <div style="margin-top: 10px; font-size: 13px;">
+                <label style="display: block; margin-bottom: 6px;">Or open during:</label>
+                <div class="time-range-row">
+                    <input type="time" id="filterTimeFrom" class="time-picker">
+                    <span style="color: #6b7280; font-weight: bold;">-</span>
+                    <input type="time" id="filterTimeTo" class="time-picker">
+                </div>
+            </div>
+            <button id="applyFilterBtn" class="btn-primary" style="margin-top:16px; width:100%; padding: 8px;">Apply
+                Filter</button>
+        </div>
+    </div>
+
+    <div class="map-control legend-control" id="mapLegend">
+        <div class="legend-header" onclick="toggleLegend()">
+            <strong data-i18n="legend" style="font-size: 14px;">Legend</strong>
+            <span id="legendChevron" class="legend-chevron">▼</span>
+        </div>
+        <div class="legend-content" id="legendContent">
+            <div class="legend-item"><span class="legend-color" style="background-color: #10b981;"></span> <span
+                    data-i18n="statusOpen">Open</span></div>
+            <div class="legend-item"><span class="legend-color" style="background-color: #3b82f6;"></span> <span
+                    data-i18n="statusStudent">Students Only</span></div>
+            <div class="legend-item"><span class="legend-color" style="background-color: #f59e0b;"></span> <span
+                    data-i18n="statusStaff">Staff Only</span></div>
+            <div class="legend-item"><span class="legend-color" style="background-color: #9ca3af;"></span> <span
+                    data-i18n="statusClosed">Closed</span></div>
+        </div>
+    </div>
+
+    <button id="mobileMenuToggle" class="hamburger-btn mobile-only-btn">☰</button>
+
+    <div class="map-control bottom-left-controls" id="bottomControls">
+        <label class="toggle-label">
+            <span data-i18n="satellite">Satellite</span>
+            <div class="toggle-wrapper">
+                <input type="checkbox" id="satelliteToggle" class="sr-only" onchange="toggleSatelliteMode()">
+                <div class="toggle-track"></div>
+                <div class="toggle-dot"></div>
+            </div>
+        </label>
+        <label class="toggle-label">
+            <span data-i18n="darkMode">Dark Mode</span>
+            <div class="toggle-wrapper">
+                <input type="checkbox" id="darkModeToggle" class="sr-only" onchange="toggleDarkMode()">
+                <div class="toggle-track"></div>
+                <div class="toggle-dot"></div>
+            </div>
+        </label>
+        <select id="lang-select" class="form-control" onchange="changeLanguage(this.value)">
+            <option value="en">English</option>
+            <option value="th">ภาษาไทย</option>
+            <option value="cn">中文</option>
+            <option value="kh">ភាសាខ្មែរ</option>
+        </select>
+    </div>
+
+    <button id="locateMeBtn" class="fab locate-fab" title="Find My Location">🎯</button>
+    <div id="map"></div>
+
+    <button id="addPlaceFab" class="fab" title="Add new Place">
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+    </button>
+
+    <div id="addPlaceModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Add New Place</h2>
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 15px;">Submit a place for admin review.</p>
+
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label for="placeTitle">Place Name (English) *Primary</label>
+                    <input type="text" id="placeTitle" class="form-control" placeholder="e.g. Science Building WC"
+                        required>
+                </div>
+
+                <div class="form-group full-width" style="margin-bottom: 5px;">
+                    <details>
+                        <summary>🌍 Add Translations</summary>
+                        <div class="lang-inputs">
+                            <input type="text" id="placeTitleTh" class="form-control" placeholder="Name (Thai)">
+                            <input type="text" id="placeTitleCn" class="form-control" placeholder="Name (Chinese)">
+                            <input type="text" id="placeTitleKh" class="form-control" placeholder="Name (Khmer)">
+                        </div>
+                    </details>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Operating Hours</label>
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 8px;">
+                        <label class="checkbox-container" style="margin-bottom:0;">
+                            <input type="checkbox" id="is24hCheckbox">
+                            <span>Open 24 Hours</span>
+                        </label>
+                    </div>
+                    <div class="time-range-row" id="timeInputGroup">
+                        <input type="time" id="placeTimeFrom" class="time-picker">
+                        <span style="color: #6b7280; font-weight: bold; font-size: 13px;">to</span>
+                        <input type="time" id="placeTimeTo" class="time-picker">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="placeAccess">Access</label>
+                    <select id="placeAccess" class="form-control">
+                        <option value="all">All (Staff & Students)</option>
+                        <option value="student">Students only</option>
+                        <option value="staff">Staff only</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="placeNote">Note (Optional)</label>
+                    <input type="text" id="placeNote" class="form-control" placeholder="e.g. Male WC only">
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Attachments & Location</label>
+                    <div class="image-row">
+                        <div class="image-section" id="placeImageSection">
+                            <input type="file" id="placeImage" accept="image/*" />
+                            <span class="clear-btn" title="Clear image">×</span>
+                        </div>
+                        <div class="location-section" id="placeLocationSection">
+                            <button type="button" id="pickLocationBtn">📍 Pick Map Location</button>
+                        </div>
+                    </div>
+                    <p id="selectedCoordsText" style="font-size: 12px; color: #059669; margin-top: 6px; display: none;">
+                        ✅ Location pinned!</p>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" id="cancelModalBtn" class="btn-text">Cancel</button>
+                <button type="button" id="submitPlaceBtn" class="btn-primary">Submit Place</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mapConfirmUI" class="map-confirm-ui">
+        <p>Drag the map to the exact location.</p>
+        <div style="display: flex; gap: 10px; align-items: center; justify-content: center;">
+            <button id="cancelMarkerBtn" class="btn-text" style="background: transparent; margin: 0;">Cancel</button>
+            <button id="confirmMarkerBtn" class="btn-primary" style="margin: 0;">Confirm</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
     <script src="script.js"></script>
+    <script src="utils.js"></script>
 </body>
+
 </html>

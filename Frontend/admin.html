@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Silpakorn WC Map</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; margin: 0; padding: 0; overflow: hidden; color: #1f2937; }
+        body.lang-kh, body.lang-kh input, body.lang-kh select, body.lang-kh button { font-family: 'Battambang', sans-serif !important; }
+
+        #loginOverlay, #editModalOverlay, #addModalOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        #editModalOverlay, #addModalOverlay { display: none; }
+
+        .modal-box { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); width: 90%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+        .modal-box h2 { margin-top: 0; color: #1b3899; font-size: 1.5rem; margin-bottom: 15px;}
+        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-grid .full-width { grid-column: span 2; }
+        .form-group { margin-bottom: 0; }
+        .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #374151; }
+
+        .form-control, .modal-box input[type="password"] { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; font-size: 14px; font-family: inherit;}
+        
+        .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; cursor: pointer; color: #374151; }
+        .checkbox-container input[type="checkbox"] { width: 16px; height: 16px; margin: 0; cursor: pointer; accent-color: #1b3899; }
+        .time-range-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; margin-top: 8px;}
+        .time-picker { flex: 1; padding: 10px 8px; border-radius: 6px; border: 1px solid #d1d5db; font-family: inherit; font-size: 13px; }
+
+        details { border: 1px solid #d1d5db; padding: 10px; border-radius: 8px; background: #f9fafb; margin-bottom: 5px;}
+        summary { cursor: pointer; font-weight: bold; color: #1b3899; font-size: 13px; user-select: none; }
+        .lang-inputs { display: flex; gap: 8px; margin-top: 10px; }
+        .lang-inputs input { flex: 1; min-width: 0; }
+
+        .image-row { display: flex; gap: 12px; height: 90px; }
+        .image-section, .location-section { flex: 1; background: #f9fafb; border: 2px dashed #d1d5db; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; background-size: cover; background-position: center; transition: border-color 0.2s;}
+        .image-section:hover, .location-section:hover { border-color: #1b3899; }
+        .image-section input[type="file"] { position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        .image-section::after { content: "📸 Add Image"; color: #6b7280; font-size: 13px; font-weight: 500; pointer-events: none; }
+        .image-section.has-preview::after { content: none; }
+        .location-section button { background: transparent; border: none; font-size: 14px; font-weight: 600; color: #1b3899; cursor: pointer; width: 100%; height: 100%; }
+
+        .clear-btn { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; z-index: 5; }
+        .image-section.has-preview .clear-btn { display: flex; }
+        .image-section .clear-btn { display: none; }
+
+        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; }
+        .btn-primary { background: #1b3899; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; transition: opacity 0.2s; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-cancel { background: transparent; color: #4b5563; padding: 10px 16px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .btn-cancel:hover { background: #f3f4f6; border-radius: 8px; }
+
+        #dashboard { display: none; height: 100vh; width: 100vw; }
+        #sidebar { width: 450px; background: white; height: 100%; overflow-y: auto; box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); z-index: 10; display: flex; flex-direction: column; }
+        
+        .sidebar-header { padding: 20px 20px 0 20px; background: #ffffff; position: sticky; top: 0; z-index: 5; border-bottom: 1px solid #e5e7eb; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; }
+        .header-top h1 { margin: 0; color: #1b3899; font-size: 22px; }
+        .header-actions { display: flex; gap: 8px; }
+        .action-btn { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .btn-backup { background: #10b981; color: white; }
+        .btn-add { background: #1b3899; color: white; }
+
+        .tabs { display: flex; margin-top: 15px; }
+        .tab { flex: 1; text-align: center; padding: 12px 0; cursor: pointer; font-weight: 600; color: #6b7280; border-bottom: 3px solid transparent; transition: all 0.2s; }
+        .tab.active { color: #1b3899; border-bottom-color: #1b3899; }
+
+        .admin-filter-bar { background: #f3f4f6; padding: 12px; border-radius: 8px; margin: 15px 20px; display: flex; flex-direction: column; gap: 10px; }
+        .admin-filter-bar input[type="text"], .admin-filter-bar select { padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; width: 100%; box-sizing: border-box; }
+        .admin-time-row { display: flex; align-items: center; gap: 10px; }
+
+        .tab-content { display: none; padding: 20px; flex: 1; }
+        .tab-content.active { display: block; }
+        
+        #mapView { flex: 1; height: 100%; background: #e5e3df; position: relative; }
+        
+        .card { border: 1px solid #d1d5db; padding: 16px; border-radius: 8px; margin-bottom: 16px; background: #fafafa; transition: border-color 0.2s, box-shadow 0.2s; cursor: pointer; }
+        .card:hover { border-color: #1b3899; box-shadow: 0 4px 10px rgba(27, 56, 153, 0.1); }
+        .card-info h3 { margin: 0 0 8px 0; color: #111827; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .card-info p { margin: 4px 0; font-size: 13px; color: #4b5563; }
+        .card-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { flex: 1; padding: 8px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.8; }
+        .btn-approve { background-color: #10b981; color: white; }
+        .btn-reject { background-color: #ef4444; color: white; }
+        .btn-edit { background-color: #3b82f6; color: white; }
+        .empty-state { text-align: center; color: #6b7280; font-style: italic; padding: 40px 20px; }
+
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); color: white; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 500; z-index: 9999; opacity: 0; visibility: hidden; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
+        .toast.success { background-color: #10b981; }
+        .toast.error { background-color: #ef4444; }
+
+        @media(max-width: 768px) {
+            #dashboard { flex-direction: column-reverse; }
+            #sidebar { width: 100%; height: 50vh; }
+            #mapView { width: 100%; height: 50vh; }
+            .form-grid { grid-template-columns: 1fr; }
+            .form-grid .full-width { grid-column: span 1; }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loginOverlay">
+        <div class="modal-box" style="text-align: center; max-width: 350px;">
+            <h2>Admin Login</h2>
+            <input type="password" id="adminPassword" placeholder="Enter Admin Password" style="margin-bottom: 15px;">
+            <button class="btn-primary" style="width: 100%;" onclick="login()">Unlock Dashboard</button>
+        </div>
+    </div>
+
+    <div id="editModalOverlay">
+        <div class="modal-box">
+            <h2>Edit Place</h2>
+            <input type="hidden" id="editId">
+            <input type="hidden" id="editLat">
+            <input type="hidden" id="editLng">
+
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label>Name (English) *Primary:</label>
+                    <input type="text" id="editNameEn" class="form-control" placeholder="e.g. Science Building WC">
+                </div>
+
+                <div class="form-group full-width">
+                    <details>
+                        <summary>🌍 Add Translations</summary>
+                        <div class="lang-inputs">
+                            <input type="text" id="editNameTh" class="form-control" placeholder="Name (Thai)">
+                            <input type="text" id="editNameCn" class="form-control" placeholder="Name (Chinese)">
+                            <input type="text" id="editNameKh" class="form-control" placeholder="Name (Khmer)">
+                        </div>
+                    </details>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Operating Hours:</label>
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="edit24hCheckbox"
+                            onchange="document.getElementById('editTimeFrom').disabled = this.checked; document.getElementById('editTimeTo').disabled = this.checked;">
+                        <span>Open 24 Hours</span>
+                    </label>
+                    <div class="time-range-row">
+                        <input type="time" id="editTimeFrom" class="time-picker">
+                        <span style="font-weight: bold; color: #6b7280; font-size: 13px;">to</span>
+                        <input type="time" id="editTimeTo" class="time-picker">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Access:</label>
+                    <select id="editAccess" class="form-control">
+                        <option value="all">All (Staff & Students)</option>
+                        <option value="student">Students only</option>
+                        <option value="staff">Staff only</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Note (Optional):</label> 
+                    <input type="text" id="editNote" class="form-control">
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Attachments & Location:</label>
+                    <div class="image-row">
+                        <div class="image-section" id="editImageSection">
+                            <input type="file" id="editImage" accept="image/*">
+                            <span class="clear-btn" title="Clear image">×</span>
+                        </div>
+                        <div class="location-section" id="editLocationSection">
+                            <button type="button" id="editPickLocationBtn">📍 Reposition on Map</button>
+                        </div>
+                    </div>
+                    <span id="editImageNote" style="font-size:12px;color:#6b7280; margin-top:4px; display:block;"></span>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                <button class="btn-primary" onclick="saveEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="addModalOverlay">
+        <div class="modal-box">
+            <h2>Add New Place Directly</h2>
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 15px;">Bypasses pending queue.</p>
+            <input type="hidden" id="addLat">
+            <input type="hidden" id="addLng">
+
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label>Name (English) *Primary:</label>
+                    <input type="text" id="addNameEn" class="form-control" placeholder="e.g. Science Building WC">
+                </div>
+
+                <div class="form-group full-width">
+                    <details>
+                        <summary>🌍 Add Translations</summary>
+                        <div class="lang-inputs">
+                            <input type="text" id="addNameTh" class="form-control" placeholder="Name (Thai)">
+                            <input type="text" id="addNameCn" class="form-control" placeholder="Name (Chinese)">
+                            <input type="text" id="addNameKh" class="form-control" placeholder="Name (Khmer)">
+                        </div>
+                    </details>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Operating Hours:</label>
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="add24hCheckbox"
+                            onchange="document.getElementById('addTimeFrom').disabled = this.checked; document.getElementById('addTimeTo').disabled = this.checked;">
+                        <span>Open 24 Hours</span>
+                    </label>
+                    <div class="time-range-row">
+                        <input type="time" id="addTimeFrom" class="time-picker">
+                        <span style="font-weight: bold; color: #6b7280; font-size: 13px;">to</span>
+                        <input type="time" id="addTimeTo" class="time-picker">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Access:</label>
+                    <select id="addAccess" class="form-control">
+                        <option value="all">All (Staff & Students)</option>
+                        <option value="student">Students only</option>
+                        <option value="staff">Staff only</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Note (Optional):</label> 
+                    <input type="text" id="addNote" class="form-control">
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Attachments & Location:</label>
+                    <div class="image-row">
+                        <div class="image-section" id="addImageSection">
+                            <input type="file" id="addImage" accept="image/*">
+                            <span class="clear-btn" title="Clear image">×</span>
+                        </div>
+                        <div class="location-section" id="addLocationSection">
+                            <button type="button" id="addPickLocationBtn">📍 Pick Map Location</button>
+                        </div>
+                    </div>
+                    <p id="addCoordsText" style="display:none; color:#10b981; font-size:12px; margin-top:6px; font-weight:bold;">✅ Location Set!</p>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="document.getElementById('addModalOverlay').style.display='none'; document.getElementById('addImage').value=''; setSectionBackground('addImageSection','');">Cancel</button>
+                <button class="btn-primary" onclick="submitAdminAdd()">Add to Map</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard">
+        <div id="sidebar">
+            <div class="sidebar-header">
+                <div class="header-top">
+                    <h1>Admin Dashboard</h1>
+                    <div class="header-actions">
+                        <button class="action-btn btn-backup" onclick="downloadBackup()">📥 Backup</button>
+                        <button class="action-btn btn-add"
+                            onclick="document.getElementById('addModalOverlay').style.display='flex'; document.getElementById('addImage').value=''; setSectionBackground('addImageSection','');">➕ Add Place</button>
+                    </div>
+                </div>
+
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('pending', this)">Pending</div>
+                    <div class="tab" onclick="switchTab('manage', this)">Manage All</div>
+                </div>
+            </div>
+
+            <div class="admin-filter-bar" id="adminFilterContainer" style="display:none;">
+                <input type="text" id="adminSearch" placeholder="Search places..." oninput="applyAdminFilters()">
+                <select id="adminFilterAccess" onchange="applyAdminFilters()">
+                    <option value="any">Any Access</option>
+                    <option value="all">All (Staff & Students)</option>
+                    <option value="student">Students only</option>
+                    <option value="staff">Staff only</option>
+                </select>
+                <label class="checkbox-container">
+                    <input type="checkbox" id="adminFilter24h" onchange="applyAdminFilters()">
+                    <span>Open 24h Only</span>
+                </label>
+                <div class="admin-time-row">
+                    <span style="font-size:12px; color:#6b7280; font-weight:bold;">Or open during:</span>
+                    <input type="time" id="adminTimeFrom" class="time-picker" onchange="applyAdminFilters()">
+                    <span>-</span>
+                    <input type="time" id="adminTimeTo" class="time-picker" onchange="applyAdminFilters()">
+                </div>
+            </div>
+
+            <div id="pendingTab" class="tab-content active">
+                <div id="pendingList">
+                    <div class="empty-state">Loading pending places...</div>
+                </div>
+            </div>
+
+            <div id="manageTab" class="tab-content">
+                <div id="manageList">
+                    <div class="empty-state">Loading places...</div>
+                </div>
+            </div>
+        </div>
+        <div id="mapView"></div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="utils.js"></script>
+
+    <script>
+        let sessionPassword = "";
+        let map;
+        let adminMarkers = [];
+        let currentTab = "pending";
+        let allApprovedPlaces = [];
+
+        function setSectionBackground(sectionId, url) {
+            const sec = document.getElementById(sectionId);
+            if (sec) {
+                if (url) {
+                    sec.style.backgroundImage = `url(${url})`;
+                    sec.classList.add('has-preview');
+                } else {
+                    sec.style.backgroundImage = "";
+                    sec.classList.remove('has-preview');
+                }
+            }
+        }
+        function initImagePreviews() {
+            const addInput = document.getElementById('addImage');
+            const editInput = document.getElementById('editImage');
+            const addClear = document.querySelector('#addImageSection .clear-btn');
+            const editClear = document.querySelector('#editImageSection .clear-btn');
+            const addLocation = document.getElementById('addPickLocationBtn');
+            const editLocation = document.getElementById('editPickLocationBtn');
+
+            if (addInput) {
+                addInput.addEventListener('change', () => {
+                    if (addInput.files && addInput.files[0]) {
+                        const url = URL.createObjectURL(addInput.files[0]);
+                        setSectionBackground('addImageSection', url);
+                    } else { setSectionBackground('addImageSection', ''); }
+                });
+            }
+            if (addClear) {
+                addClear.addEventListener('click', (e) => {
+                    e.stopPropagation(); document.getElementById('addImage').value = ''; setSectionBackground('addImageSection', '');
+                });
+            }
+            if (editInput) {
+                editInput.addEventListener('change', () => {
+                    if (editInput.files && editInput.files[0]) {
+                        const url = URL.createObjectURL(editInput.files[0]);
+                        setSectionBackground('editImageSection', url);
+                    }
+                });
+            }
+            if (editClear) {
+                editClear.addEventListener('click', (e) => {
+                    e.stopPropagation(); document.getElementById('editImage').value = ''; setSectionBackground('editImageSection', '');
+                });
+            }
+            if (addLocation) addLocation.addEventListener('click', startAddPosition);
+            if (editLocation) editLocation.addEventListener('click', startReposition);
+        }
+
+        document.addEventListener('DOMContentLoaded', initImagePreviews);
+        initImagePreviews();
+
+        function showToast(message, type = "success") {
+            const toast = document.getElementById("toast");
+            toast.innerText = message;
+            toast.className = `toast show ${type}`;
+            setTimeout(() => { toast.classList.remove("show"); }, 3000);
+        }
+
+        async function login() {
+            const passInput = document.getElementById("adminPassword").value;
+            if (!passInput) return showToast("Please enter a password.", "error");
+
+            try {
+                const res = await fetch('/api/admin-login', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: passInput })
+                });
+
+                if (res.ok) {
+                    sessionPassword = passInput;
+                    document.getElementById('loginOverlay').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'flex';
+                    initAdminMap();
+                } else { showToast("Incorrect password!", "error"); }
+            } catch (e) { console.error("Login error", e); }
+        }
+
+        document.getElementById("adminPassword").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") login();
+        });
+
+        async function initAdminMap() {
+            try {
+                const res = await fetch('/api/config');
+                const config = await res.json();
+
+                window.loadMapData = function () {
+                    map = new google.maps.Map(document.getElementById("mapView"), {
+                        zoom: 16.5, center: { lat: 13.8188, lng: 100.0402 }, disableDefaultUI: false,
+                    });
+                    loadDataForCurrentTab();
+                };
+
+                const script = document.createElement("script");
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${config.mapsApiKey}&callback=loadMapData`;
+                script.async = true; script.defer = true;
+                document.head.appendChild(script);
+            } catch (err) { console.error("Failed to load map", err); }
+        }
+
+        function switchTab(tabName, element) {
+            currentTab = tabName;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            element.classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+
+            document.getElementById('adminFilterContainer').style.display = tabName === 'manage' ? 'flex' : 'none';
+            loadDataForCurrentTab();
+        }
+
+        function loadDataForCurrentTab() {
+            if (currentTab === 'pending') fetchPending();
+            if (currentTab === 'manage') fetchAllPlaces();
+        }
+
+        async function fetchPending() {
+            try {
+                const res = await fetch('/api/pending');
+                renderList(await res.json(), 'pendingList');
+            } catch (err) { console.error(err); }
+        }
+
+        async function fetchAllPlaces() {
+            try {
+                const res = await fetch('/api/all-places');
+                allApprovedPlaces = await res.json();
+                applyAdminFilters();
+            } catch (err) { console.error(err); }
+        }
+
+        function applyAdminFilters() {
+            if (currentTab !== 'manage') return;
+            const query = document.getElementById('adminSearch').value.toLowerCase();
+            const f24h = document.getElementById('adminFilter24h').checked;
+            const fFrom = document.getElementById('adminTimeFrom').value;
+            const fTo = document.getElementById('adminTimeTo').value;
+            const filterAccess = document.getElementById("adminFilterAccess").value;
+
+            const filtered = allApprovedPlaces.filter(place => {
+                const primaryName = place.names ? place.names.en : (place.building.en || place.building);
+                let match = primaryName.toLowerCase().includes(query);
+
+                if (match) {
+                    const hours = (place.operatingHours || "").toLowerCase();
+
+                    if (f24h) {
+                        if (!hours.includes("24")) match = false;
+                    } else if (fFrom && fTo) {
+                        if (hours.includes("-")) {
+                            const [mFrom, mTo] = hours.split("-").map(s => s.trim());
+                            match = checkTimeOverlap(timeToMins(mFrom), timeToMins(mTo), timeToMins(fFrom), timeToMins(fTo));
+                        } else if (!hours.includes("24")) { match = false; }
+                    }
+
+                    if (match && filterAccess !== "any") {
+                        const role = place.accessType || "all";
+                        if (role !== filterAccess) { match = false; }
+                    }
+                }
+                return match;
+            });
+            renderList(filtered, 'manageList');
+        }
+
+        function renderList(places, containerId) {
+            const list = document.getElementById(containerId);
+            list.innerHTML = '';
+            adminMarkers.forEach(m => m.setMap(null));
+            adminMarkers = [];
+
+            if (places.length === 0) { list.innerHTML = `<div class="empty-state">🎉 No Places found!</div>`; return; }
+
+            places.forEach(place => {
+                
+                let color = "#10b981"; 
+                if (currentTab === 'pending') {
+                    color = "#eab308"; 
+                } else {
+                    color = getMarkerColor(place); 
+                }
+
+                const svgIcon = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
+                <circle cx="14" cy="16" r="10" fill="rgba(0,0,0,0.3)" />
+                <circle cx="14" cy="14" r="10" fill="${color}" stroke="#ffffff" stroke-width="2.5" />
+            </svg>
+        `;
+
+                const marker = new google.maps.Marker({
+                    position: { lat: place.lat, lng: place.lng },
+                    map: map, title: place.names ? place.names.en : place.building.en, animation: google.maps.Animation.DROP,
+                    icon: { url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svgIcon), anchor: new google.maps.Point(14, 14) }
+                });
+                adminMarkers.push(marker);
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.onclick = () => {
+                    map.panTo(marker.getPosition()); map.setZoom(18);
+                    marker.setAnimation(google.maps.Animation.BOUNCE);
+                    setTimeout(() => marker.setAnimation(null), 1500);
+                };
+
+                let actionButtons = "";
+                const placeDataStr = encodeURIComponent(JSON.stringify(place));
+
+                if (currentTab === 'pending') {
+                    actionButtons = `
+                <button class="btn btn-approve" onclick="handleAction(event, ${place.id}, 'approve')">Approve ✓</button>
+                <button class="btn btn-edit" onclick="openEditModal(event, '${placeDataStr}')">Edit ✏️</button>
+                <button class="btn btn-reject" onclick="handleAction(event, ${place.id}, 'reject')">Reject ✕</button>
+            `;
+                } else {
+                    actionButtons = `
+                <button class="btn btn-edit" onclick="openEditModal(event, '${placeDataStr}')">Edit ✏️</button>
+                <button class="btn btn-reject" onclick="handleAction(event, ${place.id}, 'reject')">Delete 🗑️</button>
+            `;
+                }
+
+                // FIX: Properly extract the English name whether it's an object or a string
+                let displayName = "Unknown Place";
+                if (place.names && place.names.en) displayName = place.names.en;
+                else if (place.building && place.building.en) displayName = place.building.en;
+                else if (typeof place.building === "string") displayName = place.building;
+
+                card.innerHTML = `
+            <div class="card-info">
+                <h3><span class="status-dot" style="background-color: ${color};"></span> ${displayName} </h3>
+                <p><strong>🕒 Hours:</strong> ${place.operatingHours}</p>
+                <p><strong>👥 Access:</strong> ${
+                    place.accessType === 'staff' ? 'Staff only' :
+                    place.accessType === 'student' ? 'Students only' :
+                    'All'
+                }</p>
+                <p><strong>📝 Note:</strong> ${place.note || place.notes || 'None'}</p>
+            </div>
+            <div class="card-actions">${actionButtons}</div>
+        `;
+                list.appendChild(card);
+            });
+        }
+
+        async function handleAction(event, id, action) {
+            event.stopPropagation();
+            if (!confirm(`Are you sure you want to ${action === 'reject' ? 'delete/reject' : 'approve'} this Place?`)) return;
+
+            try {
+                const res = await fetch(`/api/${action}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id, password: sessionPassword })
+                });
+                if (res.ok) { showToast(`Successfully completed action.`); loadDataForCurrentTab(); }
+                else showToast("Action failed. Check password.", "error");
+            } catch (err) { console.error(err); }
+        }
+
+        async function downloadBackup() {
+            try {
+                const res = await fetch('/api/all-places');
+                const data = await res.json();
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `silpakorn_map_backup_${new Date().toISOString().slice(0, 10)}.json`;
+                document.body.appendChild(a);
+                a.click(); a.remove();
+                showToast("Backup downloaded!", "success");
+            } catch (e) { showToast("Backup failed.", "error"); }
+        }
+
+        function openEditModal(event, placeDataStr) {
+            event.stopPropagation();
+            const place = JSON.parse(decodeURIComponent(placeDataStr));
+
+            document.getElementById('editId').value = place.id;
+
+            // FIX: Populate modal perfectly regardless of database format
+            const langData = place.names || place.building;
+            
+            if (langData && typeof langData === 'object') {
+                document.getElementById('editNameEn').value = langData.en || "";
+                document.getElementById('editNameTh').value = langData.th || "";
+                document.getElementById('editNameCn').value = langData.cn || "";
+                document.getElementById('editNameKh').value = langData.kh || "";
+            } else {
+                document.getElementById('editNameEn').value = place.building || "";
+                document.getElementById('editNameTh').value = "";
+                document.getElementById('editNameCn').value = "";
+                document.getElementById('editNameKh').value = "";
+            }
+
+            if (place.img) {
+                const imgNote = document.getElementById('editImageNote');
+                if (imgNote) imgNote.textContent = "Current image is saved. Upload a new one to replace.";
+                setSectionBackground('editImageSection', place.img);
+            } else {
+                const imgNote = document.getElementById('editImageNote');
+                if (imgNote) imgNote.textContent = "";
+                setSectionBackground('editImageSection', '');
+            }
+
+            const role = checkAccessRole(place.accessType || place.access || "");
+            document.getElementById('editAccess').value = role;
+
+            document.getElementById('editNote').value = place.note || place.notes || "";
+            document.getElementById('editLat').value = place.lat;
+            document.getElementById('editLng').value = place.lng;
+
+            const hours = place.operatingHours || "";
+            if (hours.toLowerCase().includes("24")) {
+                document.getElementById('edit24hCheckbox').checked = true;
+                document.getElementById('editTimeFrom').disabled = true;
+                document.getElementById('editTimeTo').disabled = true;
+                document.getElementById('editTimeFrom').value = "";
+                document.getElementById('editTimeTo').value = "";
+            } else if (hours.includes("-")) {
+                document.getElementById('edit24hCheckbox').checked = false;
+                document.getElementById('editTimeFrom').disabled = false;
+                document.getElementById('editTimeTo').disabled = false;
+                const parts = hours.split("-");
+                document.getElementById('editTimeFrom').value = parts[0].trim();
+                document.getElementById('editTimeTo').value = parts[1].trim();
+            } else {
+                document.getElementById('edit24hCheckbox').checked = false;
+                document.getElementById('editTimeFrom').value = "";
+                document.getElementById('editTimeTo').value = "";
+            }
+
+            document.getElementById('editModalOverlay').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModalOverlay').style.display = 'none';
+            document.getElementById('editImage').value = '';
+            setSectionBackground('editImageSection', '');
+            const note = document.getElementById('editImageNote'); if (note) note.textContent = '';
+        }
+
+        function startReposition() {
+            document.getElementById('editModalOverlay').style.display = 'none';
+            showToast("Click anywhere on the map to set the NEW location.", "success");
+            map.setOptions({ draggableCursor: 'crosshair' });
+
+            google.maps.event.addListenerOnce(map, 'click', function (event) {
+                document.getElementById('editLat').value = event.latLng.lat();
+                document.getElementById('editLng').value = event.latLng.lng();
+                map.setOptions({ draggableCursor: '' });
+                document.getElementById('editModalOverlay').style.display = 'flex';
+                showToast("Coordinates updated! Click Save.", "success");
+            });
+        }
+
+        async function saveEdit() {
+            let openTime = "Not specified";
+            if (document.getElementById('edit24hCheckbox').checked) { openTime = "24 Hours"; }
+            else if (document.getElementById('editTimeFrom').value && document.getElementById('editTimeTo').value) {
+                openTime = `${document.getElementById('editTimeFrom').value} - ${document.getElementById('editTimeTo').value}`;
+            }
+
+            const namesObj = {
+                en: document.getElementById('editNameEn').value,
+                th: document.getElementById('editNameTh').value,
+                cn: document.getElementById('editNameCn').value,
+                kh: document.getElementById('editNameKh').value
+            };
+
+            const imageElem = document.getElementById('editImage');
+            const form = new FormData();
+            form.append('password', sessionPassword);
+            form.append('id', parseInt(document.getElementById('editId').value));
+            form.append('names', JSON.stringify(namesObj));
+            form.append('operatingHours', openTime);
+            form.append('access', document.getElementById('editAccess').value);
+            form.append('note', document.getElementById('editNote').value);
+            form.append('lat', document.getElementById('editLat').value);
+            form.append('lng', document.getElementById('editLng').value);
+            if (imageElem && imageElem.files[0]) form.append('image', imageElem.files[0]);
+
+            try {
+                const res = await fetch('/api/edit-place', { method: 'POST', body: form });
+                if (res.ok) { closeEditModal(); showToast("Place updated!", "success"); loadDataForCurrentTab(); }
+                else showToast("Failed to save changes.", "error");
+            } catch (err) { console.error(err); }
+        }
+
+        function startAddPosition() {
+            document.getElementById('addModalOverlay').style.display = 'none';
+            showToast("Click map to drop new marker.", "success");
+            map.setOptions({ draggableCursor: 'crosshair' });
+
+            google.maps.event.addListenerOnce(map, 'click', function (event) {
+                document.getElementById('addLat').value = event.latLng.lat();
+                document.getElementById('addLng').value = event.latLng.lng();
+                map.setOptions({ draggableCursor: '' });
+                document.getElementById('addCoordsText').style.display = 'block';
+                document.getElementById('addModalOverlay').style.display = 'flex';
+            });
+        }
+
+        async function submitAdminAdd() {
+            const enName = document.getElementById('addNameEn').value;
+            const lat = document.getElementById('addLat').value;
+            const lng = document.getElementById('addLng').value;
+
+            if (!enName || !lat) return showToast("Primary Name (EN) and Map Location are required.", "error");
+
+            let openTime = "Not specified";
+            if (document.getElementById('add24hCheckbox').checked) { openTime = "24 Hours"; }
+            else if (document.getElementById('addTimeFrom').value && document.getElementById('addTimeTo').value) {
+                openTime = `${document.getElementById('addTimeFrom').value} - ${document.getElementById('addTimeTo').value}`;
+            }
+
+            const namesObj = {
+                en: enName,
+                th: document.getElementById('addNameTh').value,
+                cn: document.getElementById('addNameCn').value,
+                kh: document.getElementById('addNameKh').value
+            };
+
+            const imageElem = document.getElementById('addImage');
+            const form = new FormData();
+            form.append('password', sessionPassword);
+            form.append('names', JSON.stringify(namesObj));
+            form.append('operatingHours', openTime);
+            form.append('access', document.getElementById('addAccess').value);
+            form.append('note', document.getElementById('addNote').value);
+            form.append('lat', lat);
+            form.append('lng', lng);
+            if (imageElem.files[0]) form.append('image', imageElem.files[0]);
+
+            try {
+                const res = await fetch('/api/admin-add-place', { method: 'POST', body: form });
+                if (res.ok) {
+                    document.getElementById('addModalOverlay').style.display = 'none';
+                    document.getElementById('addNameEn').value = ""; document.getElementById('addNameTh').value = "";
+                    document.getElementById('addNameCn').value = ""; document.getElementById('addNameKh').value = "";
+                    document.getElementById('addCoordsText').style.display = "none";
+                    document.getElementById('addTimeFrom').value = ""; document.getElementById('addTimeTo').value = "";
+                    document.getElementById('add24hCheckbox').checked = false;
+                    document.getElementById('addImage').value = "";
+                    setSectionBackground('addImageSection', '');
+                    showToast("Added instantly!", "success");
+                    loadDataForCurrentTab();
+                } else showToast("Failed to add.", "error");
+            } catch (err) { console.error(err); }
+        }
+    </script>
+</body>
+</html>
