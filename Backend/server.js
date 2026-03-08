@@ -7,7 +7,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/wc', (req, res) =>{
-  const data = fs.readFileSync('./Database/wcList_ENG.json', 'utf-8');
+  const data = fs.readFileSync('./Database/wcList_KH.json', 'utf-8');
   res.json(JSON.parse(data));
 })
 
