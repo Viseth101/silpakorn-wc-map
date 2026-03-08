@@ -396,5 +396,33 @@ app.post("/api/admin-add-place", upload.single('image'), async (req, res) => {
     } catch (err) { res.status(500).json({ error: "Server error adding place." }); }
 });
 
+const fs = require('fs').promises;
+const path = require('path');
+
+async function initializeDatabase() {
+    const volPath = "/app/Database/place_data.json";
+    // This is where GitHub puts your file originally
+    const githubPath = path.join(__dirname, "Database", "place_data.json");
+
+    try {
+        await fs.access(volPath);
+        console.log("✅ Database found in Volume.");
+    } catch (err) {
+        console.log("⚠️ Volume empty. Seeding data from GitHub...");
+        try {
+            const data = await fs.readFile(githubPath, 'utf8');
+            await fs.writeFile(volPath, data);
+            console.log("🚀 Data successfully seeded to Volume!");
+        } catch (seedErr) {
+            console.error("❌ Failed to seed data:", seedErr);
+        }
+    }
+}
+
+// Call this before starting the server
+initializeDatabase().then(() => {
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => { console.log(`Server is running on port ${PORT}`); });
