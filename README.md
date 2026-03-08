@@ -1,66 +1,87 @@
-# 📍 Silpakorn Campus Resource Map
+# 🚽 Silpakorn WC Map
 
-A full-stack, multilingual interactive map application designed for students and staff at Silpakorn University (Sanam Chandra Palace Campus). This project allows users to find campus facilities, view real-time operating status, and contribute new locations via an admin-moderated system.
+![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E)
+![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
+![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
+![Google Maps API](https://img.shields.io/badge/Google%20Maps-4285F4?style=for-the-badge&logo=googlemaps&logoColor=white)
 
-## 🚀 Technical Features
+A full-stack, interactive web mapping application designed to help the Silpakorn University community locate restrooms across campus. Built with a focus on accessibility, the application supports four languages and features an intuitive Admin Dashboard for community-driven data moderation.
 
-### 🗺️ Frontend & API Integration
-* **Google Maps JavaScript API**: Custom-styled map interface with a strict campus boundary restriction.
-* **Google Places API**: Integrated Autocomplete for seamless facility searching and location verification.
-* **Multilingual Support**: Real-time UI translation for **English, Thai, and Chinese**.
-* **Dynamic UI**: 
-    * Markers change color in real-time based on system time (Open/Closed).
-    * Responsive design optimized for both desktop and mobile devices (tested for 412x915px).
-    * Custom SVG markers with high-visibility shadows.
-* **Geolocation**: Native HTML5 Geolocation integration to find user position relative to campus facilities.
+## ✨ Key Features
 
-### ⚙️ Backend & Security
-* **Node.js & Express**: Lightweight RESTful API handling data requests and admin operations.
-* **Data Persistence**: JSON-based flat-file database system for locations (`wcList.json`) and user submissions (`pending_places.json`).
-* **Input Sanitization**: Server-side protection against XSS attacks by stripping malicious HTML tags.
-* **Toast Notifications**: Custom-built asynchronous notification system for non-blocking user feedback.
-
-### 🛡️ Admin CMS
-* **Secure Dashboard**: Password-protected portal for campus administrators.
-* **Moderation Loop**: Full CRUD capabilities allowing admins to:
-    * Preview user-submitted markers on a dedicated admin map.
-    * Approve or reject new facility submissions.
-    * Edit existing facility details (Name, Hours, Access, Notes) directly in the UI.
-
-## 🛠️ Installation & Setup
-
-1.  **Clone the repository** and navigate to the project folder.
-2.  **Install dependencies**:
-    ```bash
-    npm install
-    ```
-3.  **Configure environment variables**:
-    Create a `.env` file in the root directory and add your Google Maps API Key:
-    ```env
-    GOOGLE_API_KEY=your_api_key_here
-    ADMIN_PASSWORD=admin123
-    ```
-4.  **Start the server**:
-    ```bash
-    node server.js
-    ```
-5.  **Access the application**:
-    * **User Map**: `http://localhost:3000`
-    * **Admin Dashboard**: `http://localhost:3000/admin.html`
+* **🌍 Multilingual UI:** Seamlessly switch between English, Thai, Chinese, and Khmer. Features a dynamic typography engine that applies the professional 'Battambang' Google Font specifically for Khmer rendering.
+* **🗺️ Interactive Custom Map:** Integrates the Google Maps JavaScript API with custom restricted bounds (locked to the university campus), custom marker pins, and dark/satellite mode toggles.
+* **🔍 Smart Filtering:** Users can filter locations dynamically based on specific criteria:
+  * Access levels: *All (Staff & Students), Students Only, or Staff Only*.
+  * Operating hours: *Open 24 hours or open within a specific time range*.
+* **📸 Secure File Uploads:** Users can submit new locations with images. The backend uses `multer` to handle image uploads with strict MIME-type checking and a 5MB file size limit.
+* **🛡️ Secure Admin Dashboard:** A password-protected interface allowing administrators to review, edit, approve, or reject user-submitted places. 
+* **💾 Robust JSON Database Architecture:** Utilizes an atomic-write JSON file system (`place_data.json` & `pending_places.json`) as a Single Source of Truth, preventing data corruption and out-of-sync coordinates across language configurations.
 
 ## 📂 Project Structure
-* `server.js`: Node.js backend logic and API routes.
-* `Frontend/`:
-    * `index.html`: Main map interface.
-    * `admin.html`: Secure administrative dashboard.
-    * `script.js`: Core frontend logic, API calls, and map rendering.
-    * `styles.css`: consolidated, responsive styling and animations.
-    * `languages.json`: Translation strings for i18n support.
-* `Backend/`:
-    * `wcList.json`: Master database of campus locations.
-    * `pending_places.json`: Temporary storage for user submissions.
 
----
-Created for **Course 517 242 (Web Development)** - Silpakorn University.
-By  670710259 Mr. Udtarakviseth Lay
-    670710258 Mr. Sokea Sothea
+The project is cleanly separated into Frontend and Backend directories:
+
+```text
+Silpakorn-WC-Map/
+├── Backend/
+│   ├── Database/
+│   │   ├── place_data.json         # Approved production database
+│   │   └── pending_places.json     # User submissions awaiting review
+│   ├── place_data_asset/           # Directory for user-uploaded images
+│   ├── package.json                # Backend dependencies
+│   ├── server.js                   # Express server, API routes, and DB logic
+│   └── .env                        # Environment variables (Ignored by Git)
+├── Frontend/
+│   ├── index.html                  # Main client-side map UI
+│   ├── admin.html                  # Admin Dashboard UI
+│   ├── styles.css                  # Global stylesheets & responsive media queries
+│   ├── script.js                   # Client-side map initialization and filtering
+│   ├── utils.js                    # Shared logic (Role checking, color assignments)
+│   ├── languages.json              # Multilingual dictionary
+│   └── assets/                     # Static UI assets (icons, logos)
+└── .gitignore
+
+🚀 Installation & Setup
+To run this project locally, you will need Node.js installed on your machine and a Google Maps API Key with the Maps JavaScript API and Places API enabled.
+
+Clone the repository:
+
+Bash
+
+git clone [https://github.com/yourusername/Silpakorn-WC-Map.git](https://github.com/yourusername/Silpakorn-WC-Map.git)
+cd Silpakorn-WC-Map/Backend
+Install backend dependencies:
+
+Bash
+
+npm install
+Environment Setup:
+Create a .env file inside the /Backend directory and add your credentials:
+
+Code snippet
+
+PORT=3000
+GOOGLE_API_KEY=your_google_maps_api_key_here
+ADMIN_PASSWORD=your_secure_admin_password
+Start the server:
+
+Bash
+
+npm start
+# or run with nodemon for development:
+npm run dev
+View the app:
+Open your browser and navigate to http://localhost:3000. To access the admin panel, navigate to http://localhost:3000/admin.html.
+
+⚙️ Technical Highlights (For Developers)
+DRY Principles: Shared business logic (such as identifying access roles across four languages and calculating marker colors) is extracted into utils.js to ensure the Client Map and Admin Dashboard behave identically.
+
+Memory Leak Prevention: The backend file system module (fs.unlink) actively deletes orphaned image files from the server whenever an admin rejects a pending place or replaces an image.
+
+Auto-Increment ID Generation: IDs are dynamically generated by checking both the approved and pending JSON arrays, preventing database collisions even when items are deleted.
+
+👨‍💻 Author
+Developed as a Computer Science project by an international student at Silpakorn University.
