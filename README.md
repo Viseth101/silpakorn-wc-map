@@ -56,6 +56,11 @@ To run this project locally, you will need **Node.js** installed on your machine
 2. **Install backend dependencies:**
     npm install
 
+    > **Railway tip:** if your project root is set to `/Backend`, make sure the `Frontend` folder is available
+    > inside the container (copy it in build step) or set `FRONTEND_PATH` to an absolute/relative
+    > path where `index.html` lives. The server will log the resolved path on startup and warn if
+    > it doesn't exist.
+
 3. **Environment Setup:**
     Create a `.env` file inside the `/Backend` directory or configure equivalent variables in your cloud environment. Required values:
     ```ini

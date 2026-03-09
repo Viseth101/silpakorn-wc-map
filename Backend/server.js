@@ -71,6 +71,13 @@ app.use(helmet({
 app.use(express.json());
 // serve frontend assets; path may be supplied by env for nonstandard deployments
 const FRONTEND_PATH = process.env.FRONTEND_PATH ? path.resolve(process.env.FRONTEND_PATH) : path.join(__dirname, "..", "Frontend");
+
+// log where we are serving static files from and warn if missing
+console.log('Serving frontend from', FRONTEND_PATH);
+if (!fsSync.existsSync(FRONTEND_PATH)) {
+    console.warn('WARNING: frontend path does not exist; check your FRONTEND_PATH or deploy the frontend folder inside the container');
+}
+
 app.use(express.static(FRONTEND_PATH));
 app.use("/place_data_asset", express.static(ASSET_DIR));
 
