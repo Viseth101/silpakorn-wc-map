@@ -47,6 +47,9 @@ function initMap() {
     zoom: 16.1, center: silpakornCoords, disableDefaultUI: true, zoomControl: true,
     minZoom: 16.45, maxZoom: 20, restriction: { latLngBounds: campusBounds, strictBounds: false },
     styles: cleanLightModeStyles,
+    // require two-finger gesture on mobile and avoid accidental taps on POIs
+    gestureHandling: "greedy",
+    clickableIcons: false,
   });
 
   infoWindow = new google.maps.InfoWindow();
@@ -131,12 +134,8 @@ async function fetchMarkerData(lang = "en") {
 
         const DEFAULT_IMG = "/place_data_asset/Default_img.png";
         let cleanImgPath = DEFAULT_IMG;
-        if (place.img) {
-          const lower = place.img.toLowerCase();
-          if (!lower.includes("default")) {
-            if (place.img.startsWith("/place_data_asset/")) { cleanImgPath = place.img; } 
-            else { cleanImgPath = place.img.replace("../Backend/image/", "/place_data_asset/"); }
-          }
+        if (place.img && place.img.startsWith("/place_data_asset/")) {
+            cleanImgPath = place.img;
         }
 
         const imgHTML = `<img src="${cleanImgPath}" alt="Restroom Image" onerror="this.src='${DEFAULT_IMG}'; this.style.backgroundColor='#e5e7eb';" class="animated-popup-img">`;

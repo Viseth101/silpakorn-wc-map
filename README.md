@@ -9,6 +9,8 @@
 
 A full-stack, interactive web mapping application designed to help the Silpakorn University community locate restrooms across campus. Built with a focus on accessibility, the application supports four languages and features an intuitive Admin Dashboard for community-driven data moderation.
 
+> **Cloud‑ready branch:** file paths, ports and front-end location are configurable via environment variables so the server can run in containers or PaaS platforms. Local usage works with the defaults.
+
 ## ✨ Key Features
 
 * **🌍 Multilingual UI:** Seamlessly switch between English, Thai, Chinese, and Khmer. Features a dynamic typography engine that applies the professional 'Battambang' Google Font specifically for Khmer rendering.
@@ -49,16 +51,39 @@ To run this project locally, you will need **Node.js** installed on your machine
 
 1. **Clone the repository:**
     git clone https://github.com/yourusername/Silpakorn-WC-Map.git
-    cd Silpakorn-WC-Map/Backend
+    cd Silpakorn-WC-Map
+
+    > When deploying to Railway with the project root set to the repository, a helper
+    > script `start.sh` at the root will automatically install dependencies and launch
+    > the backend. It simply changes into `Backend/` and runs `npm start`.
+    >
+    > **Important:** Buildpacks detect Node.js by looking for a `package.json` at the
+    > project root. A minimal `package.json` now lives at the top level so that
+    > `npm`/`node` are installed before `start.sh` executes; without it you would see
+    > "npm: command not found" in the container logs. Alternatively you can manually
+    > set the Railway buildpack to **Node.js** or use a custom `Dockerfile`.
 
 2. **Install backend dependencies:**
     npm install
 
+    > **Railway tip:** if your project root is set to `/Backend`, make sure the `Frontend` folder is available
+    > inside the container (copy it in build step) or set `FRONTEND_PATH` to an absolute/relative
+    > path where `index.html` lives. The server will log the resolved path on startup and warn if
+    > it doesn't exist.
+
 3. **Environment Setup:**
-    Create a `.env` file inside the `/Backend` directory and add your credentials:
+    Create a `.env` file inside the `/Backend` directory or configure equivalent variables in your cloud environment. Required values:
+    ```ini
     PORT=3000
     GOOGLE_API_KEY=your_google_maps_api_key_here
     ADMIN_PASSWORD=your_secure_admin_password
+    ```
+    Optional overrides useful for cloud deploys:
+    ```ini
+    DATA_DIR=/path/to/volume/Database       # where JSON and assets live
+    FRONTEND_PATH=/app/Frontend            # if the static files are elsewhere
+    ```
+    If not provided the server will default to `Backend/Database` and `../Frontend` respectively.
 
 4. **Start the server:**
     npm start

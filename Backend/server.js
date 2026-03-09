@@ -1,12 +1,15 @@
+// === imports & configuration ===
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const fs = require("fs").promises;
+const fsSync = require("fs");          // synchronous filesystem calls when needed
 const path = require("path");
 const app = express();
 const helmet = require("helmet");
 
+// === rate limiting ===
 const rateLimit = require("express-rate-limit");
 
 // Limit submissions from the same IP to 5 requests per 15 minutes
@@ -16,11 +19,18 @@ const submitLimiter = rateLimit({
     message: { error: "Too many submissions from this IP. Please try again in 15 minutes." }
 });
 
-const ASSET_DIR = path.join(__dirname, "place_data_asset");
-if (!require("fs").existsSync(ASSET_DIR)) {
-    require("fs").mkdirSync(ASSET_DIR);
+// === filesystem constants ===
+// allow overriding base data directory via environment (useful for cloud volumes)
+const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(__dirname, "Database");
+
+// asset subdirectory inside data directory
+const ASSET_DIR = path.join(DATA_DIR, "place_data_asset");
+if (!fsSync.existsSync(ASSET_DIR)) {
+    // recursive ensures parents exist, even if DATA_DIR is mounted later
+    fsSync.mkdirSync(ASSET_DIR, { recursive: true });
 }
 
+// === file upload setup ===
 const storage = multer.diskStorage({
     destination: ASSET_DIR,
     filename: (req, file, cb) => {
@@ -52,19 +62,31 @@ const upload = multer({
     }
 });
 
+// === middleware ===
 app.use(cors());
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
 }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "/Frontend")));
+// serve frontend assets; path may be supplied by env for nonstandard deployments
+const FRONTEND_PATH = process.env.FRONTEND_PATH ? path.resolve(process.env.FRONTEND_PATH) : path.join(__dirname, "..", "Frontend");
+
+// log where we are serving static files from and warn if missing
+console.log('Serving frontend from', FRONTEND_PATH);
+if (!fsSync.existsSync(FRONTEND_PATH)) {
+    console.warn('WARNING: frontend path does not exist; check your FRONTEND_PATH or deploy the frontend folder inside the container');
+}
+
+app.use(express.static(FRONTEND_PATH));
 app.use("/place_data_asset", express.static(ASSET_DIR));
 
+// === utility helpers ===
 const CAMPUS_BOUNDS = { south: 13.812, north: 13.825, west: 100.034, east: 100.047 };
 function isWithinCampus(lat, lng) {
   return (lat >= CAMPUS_BOUNDS.south && lat <= CAMPUS_BOUNDS.north && lng >= CAMPUS_BOUNDS.west && lng <= CAMPUS_BOUNDS.east);
 }
+
 
 function sanitizeInput(str) {
     if (!str) return "";
@@ -76,18 +98,18 @@ async function readJSON(filePath) {
         const content = await fs.readFile(filePath, "utf-8");
         return JSON.parse(content);
     } catch (e) {
-        if (e.code === 'ENOENT') return []; 
+        if (e.code === 'ENOENT') return []; // missing file -> treat as empty
         console.error(`\n🚨 CRITICAL ERROR: Could not parse JSON. Preventing data wipe!\n`, e);
         throw e; 
     }
 }
 
+// atomic-write helper used throughout the server
 async function writeJSON(filePath, data) {
     const tempPath = `${filePath}.tmp`;
     try {
-        // 1. Write to a temporary file first
+        // write to temp and rename (atomic on most filesystems)
         await fs.writeFile(tempPath, JSON.stringify(data, null, 2));
-        // 2. Safely rename it to overwrite the old file (this step is instant/atomic)
         await fs.rename(tempPath, filePath);
     } catch (err) {
         console.error(`Failed to write JSON to ${filePath}`, err);
@@ -108,10 +130,10 @@ function checkAccessRole(accessText) {
     return "all";
 }
 
-// FIX: Generate unique ID by checking BOTH files
+// generate next numeric ID by looking at both approved & pending lists
 async function getNextId() {
-    const approved = await readJSON(path.join(__dirname, "Database", "place_data.json"));
-    const pending = await readJSON(path.join(__dirname, "Database", "pending_places.json"));
+    const approved = await readJSON(path.join(DATA_DIR, "place_data.json"));
+    const pending = await readJSON(path.join(DATA_DIR, "pending_places.json"));
     const allIds = [...approved.map(p => p.id || 0), ...pending.map(p => p.id || 0)];
     return allIds.length > 0 ? Math.max(...allIds) + 1 : 1;
 }
@@ -123,7 +145,8 @@ app.get("/wc", async (req, res) => {
         const lang = req.query.lang || "en";
         const safeLang = ALL_LANGS.includes(lang) ? lang : "en";
 
-        const dataPath = path.join(__dirname, "Database", "place_data.json");
+        // use configurable data directory for file paths
+        const dataPath = path.join(DATA_DIR, "place_data.json");
         const allPlaces = await readJSON(dataPath);
 
         const approvedPlaces = allPlaces.map((place) => {
@@ -137,7 +160,7 @@ app.get("/wc", async (req, res) => {
             };
         });
 
-        const pendingPath = path.join(__dirname, "Database", "pending_places.json");
+        const pendingPath = path.join(DATA_DIR, "pending_places.json");
         const pendingData = await readJSON(pendingPath);
 
         const formattedPending = pendingData.map((p) => {
@@ -170,7 +193,7 @@ app.post("/api/submit-place", submitLimiter, upload.single('image'), async (req,
         if (isNaN(lat) || isNaN(lng)) return res.status(400).json({ error: "Invalid coordinates" });
         if (!isWithinCampus(lat, lng)) return res.status(400).json({ error: "Location must be within campus bounds" });
 
-        // FIX: Safely parse the names object sent from the frontend
+        // the `names` field may be a JSON string or missing; default to english title
         const namesObj = req.body.names ? JSON.parse(req.body.names) : { en: req.body.title || "Unnamed" };
         const safeEn = sanitizeInput(namesObj.en);
         
@@ -185,22 +208,21 @@ app.post("/api/submit-place", submitLimiter, upload.single('image'), async (req,
         const accessType = checkAccessRole(access);
         let imgPath = req.file ? "/place_data_asset/" + req.file.filename : "";
 
-        const pendingPath = path.join(__dirname, "Database", "pending_places.json");
+        const pendingPath = path.join(DATA_DIR, "pending_places.json");
         let pendingPlaces = await readJSON(pendingPath);
 
         const nextId = await getNextId(); 
 
         pendingPlaces.push({
-            id: nextId, 
-            building, 
-            operatingHours: openTime, 
-            accessType, 
-            note, 
+            id: nextId,
+            building,
+            operatingHours: openTime,
+            accessType,
+            note,
             img: imgPath,
-            isPending: true, 
-            lat, 
+            isPending: true,
+            lat,
             lng
-            // removed detectedLang entirely
         });
 
         await writeJSON(pendingPath, pendingPlaces);
@@ -218,13 +240,13 @@ app.post("/api/admin-login", (req, res) => {
 });
 
 app.get("/api/pending", async (req, res) => {
-    try { res.json(await readJSON(path.join(__dirname, "Database", "pending_places.json"))); } 
+    try { res.json(await readJSON(path.join(DATA_DIR, "pending_places.json"))); } 
     catch (err) { res.status(500).json({ error: "Failed to fetch pending places." }); }
 });
 
 app.get("/api/all-places", async (req, res) => {
     try {
-        const dataPath = path.join(__dirname, "Database", "place_data.json");
+        const dataPath = path.join(DATA_DIR, "place_data.json");
         const allPlaces = await readJSON(dataPath);
 
         const merged = allPlaces.map((place) => {
@@ -252,7 +274,7 @@ app.post("/api/approve", async (req, res) => {
         const placeToApprove = pending.find((p) => p.id === id);
 
         if (placeToApprove) {
-            const dataPath = path.join(__dirname, "Database", "place_data.json");
+            const dataPath = path.join(DATA_DIR, "place_data.json");
             let places = await readJSON(dataPath);
 
             const names = placeToApprove.names || {
@@ -285,7 +307,7 @@ app.post("/api/reject", async (req, res) => {
     if (req.body.password !== ADMIN_PASSWORD) return res.status(401).json({ error: "Unauthorized" });
     try {
         const { id } = req.body;
-        const pendingPath = path.join(__dirname, "Database", "pending_places.json");
+        const pendingPath = path.join(DATA_DIR, "pending_places.json");
         let pending = await readJSON(pendingPath);
         
         // Find the item before deleting it to get the image path
@@ -316,7 +338,7 @@ app.post("/api/edit-place", upload.single('image'), async (req, res) => {
         const safeEn = sanitizeInput(namesObj.en);
         const finalNames = { en: safeEn, cn: sanitizeInput(namesObj.cn) || safeEn, kh: sanitizeInput(namesObj.kh) || safeEn, th: sanitizeInput(namesObj.th) || safeEn };
 
-        const dataPath = path.join(__dirname, "Database", "place_data.json");
+        const dataPath = path.join(DATA_DIR, "place_data.json");
         let places = await readJSON(dataPath);
         const index = places.findIndex((p) => p.id === parseInt(id));
 
@@ -381,7 +403,7 @@ app.post("/api/admin-add-place", upload.single('image'), async (req, res) => {
 
         let imgPath = req.file ? "/place_data_asset/" + req.file.filename : "";
 
-        const dataPath = path.join(__dirname, "Database", "place_data.json");
+        const dataPath = path.join(DATA_DIR, "place_data.json");
         let places = await readJSON(dataPath);
         const nextId = await getNextId(); // Safe ID generation
 

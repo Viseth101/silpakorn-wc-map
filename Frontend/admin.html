@@ -418,6 +418,9 @@
                 window.loadMapData = function () {
                     map = new google.maps.Map(document.getElementById("mapView"), {
                         zoom: 16.5, center: { lat: 13.8188, lng: 100.0402 }, disableDefaultUI: false,
+                        // follow same mobile behavior as public map
+                        gestureHandling: "greedy",
+                        clickableIcons: false,
                     });
                     loadDataForCurrentTab();
                 };
