@@ -552,7 +552,7 @@
             `;
                 }
 
-                // FIX: Properly extract the English name whether it's an object or a string
+                // determine display name (data structure may vary between place entries)
                 let displayName = "Unknown Place";
                 if (place.names && place.names.en) displayName = place.names.en;
                 else if (place.building && place.building.en) displayName = place.building.en;
@@ -610,7 +610,7 @@
 
             document.getElementById('editId').value = place.id;
 
-            // FIX: Populate modal perfectly regardless of database format
+            // normalize name data for editing modal (handles both object and string formats)
             const langData = place.names || place.building;
             
             if (langData && typeof langData === 'object') {

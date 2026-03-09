@@ -182,7 +182,7 @@ app.post("/api/submit-place", submitLimiter, upload.single('image'), async (req,
         if (isNaN(lat) || isNaN(lng)) return res.status(400).json({ error: "Invalid coordinates" });
         if (!isWithinCampus(lat, lng)) return res.status(400).json({ error: "Location must be within campus bounds" });
 
-        // FIX: Safely parse the names object sent from the frontend
+        // parse the names payload which may come as a JSON string or absent
         const namesObj = req.body.names ? JSON.parse(req.body.names) : { en: req.body.title || "Unnamed" };
         const safeEn = sanitizeInput(namesObj.en);
         

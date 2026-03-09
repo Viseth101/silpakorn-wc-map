@@ -9,6 +9,8 @@
 
 A full-stack, interactive web mapping application designed to help the Silpakorn University community locate restrooms across campus. Built with a focus on accessibility, the application supports four languages and features an intuitive Admin Dashboard for community-driven data moderation.
 
+> **This branch is tailored for local deployment only.** Cloud-specific handling will be added on a separate branch; no credentials or remote services are required here.
+
 ## ✨ Key Features
 
 * **🌍 Multilingual UI:** Seamlessly switch between English, Thai, Chinese, and Khmer. Features a dynamic typography engine that applies the professional 'Battambang' Google Font specifically for Khmer rendering.
@@ -56,10 +58,12 @@ To run this project locally, you will need **Node.js** installed on your machine
     # this also installs development tools (e.g. nodemon) listed under devDependencies
 
 3. **Environment Setup:**
-    Create a `.env` file inside the `/Backend` directory and add your credentials:
+    Copy `.env.example` into `/Backend/.env` and edit the values with your own credentials.
+    ```ini
     PORT=3000
     GOOGLE_API_KEY=your_google_maps_api_key_here
     ADMIN_PASSWORD=your_secure_admin_password
+    ```
 
 4. **Start the server:**
     npm start

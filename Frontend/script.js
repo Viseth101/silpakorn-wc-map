@@ -418,7 +418,7 @@ document.getElementById("submitPlaceBtn").addEventListener("click", async () => 
     const submitBtn = document.getElementById("submitPlaceBtn");
     submitBtn.disabled = true;
 
-    // FIX: Grab all 4 language inputs
+    // gather all language fields; some may not exist depending on the UI
     const enName = document.getElementById("placeTitle").value;
     const thName = document.getElementById("placeTitleTh") ? document.getElementById("placeTitleTh").value : "";
     const cnName = document.getElementById("placeTitleCn") ? document.getElementById("placeTitleCn").value : "";
@@ -463,7 +463,7 @@ document.getElementById("submitPlaceBtn").addEventListener("click", async () => 
 
 function resetForm() {
   document.getElementById("placeTitle").value = ""; 
-  // FIX: Clear language inputs
+  // clear multilingual title fields if present
   if(document.getElementById("placeTitleTh")) document.getElementById("placeTitleTh").value = "";
   if(document.getElementById("placeTitleCn")) document.getElementById("placeTitleCn").value = "";
   if(document.getElementById("placeTitleKh")) document.getElementById("placeTitleKh").value = "";
