@@ -3,6 +3,8 @@ const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const fs = require("fs").promises;
+// synchronous fs access for initial volume copy
+const fsSync = require("fs");
 const path = require("path");
 const app = express();
 const helmet = require("helmet");
@@ -20,6 +22,60 @@ const ASSET_DIR = "/app/Database/place_data_asset";
 if (!require("fs").existsSync(ASSET_DIR)) {
     require("fs").mkdirSync(ASSET_DIR);
 }
+
+// INIT: Copy Database files from repo to volume on first startup
+async function initializeVolume() {
+    const volumePath = "/app/Database";
+    const repoPath = path.join(__dirname, "Database");
+    
+    try {
+        // Ensure volume directory exists
+        if (!fsSync.existsSync(volumePath)) {
+            fsSync.mkdirSync(volumePath, { recursive: true });
+        }
+        
+        // Check if volume is empty
+        const volumeFiles = await fs.readdir(volumePath).catch(() => []);
+        
+        if (volumeFiles.length === 0) {
+            console.log("📁 Volume empty, copying initial data from repo...");
+            const repoFiles = await fs.readdir(repoPath);
+            
+            for (const file of repoFiles) {
+                const src = path.join(repoPath, file);
+                const dest = path.join(volumePath, file);
+                const stat = await fs.stat(src);
+                
+                if (stat.isDirectory()) {
+                    await copyDirRecursive(src, dest);
+                } else {
+                    await fs.copyFile(src, dest);
+                }
+            }
+            console.log("✅ Initial data copied to volume");
+        }
+    } catch (err) {
+        console.error("⚠️ Volume initialization error:", err.message);
+    }
+}
+
+async function copyDirRecursive(src, dest) {
+    await fs.mkdir(dest, { recursive: true });
+    const files = await fs.readdir(src);
+    for (const file of files) {
+        const srcFile = path.join(src, file);
+        const destFile = path.join(dest, file);
+        const stat = await fs.stat(srcFile);
+        if (stat.isDirectory()) {
+            await copyDirRecursive(srcFile, destFile);
+        } else {
+            await fs.copyFile(srcFile, destFile);
+        }
+    }
+}
+
+// Run initialization
+initializeVolume().catch(err => console.error("Failed to initialize volume:", err));
 
 const storage = multer.diskStorage({
     destination: ASSET_DIR,
