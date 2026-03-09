@@ -53,6 +53,7 @@ To run this project locally, you will need **Node.js** installed on your machine
 
 2. **Install backend dependencies:**
     npm install
+    # this also installs development tools (e.g. nodemon) listed under devDependencies
 
 3. **Environment Setup:**
     Create a `.env` file inside the `/Backend` directory and add your credentials:

@@ -47,7 +47,8 @@ function initMap() {
     zoom: 16.1, center: silpakornCoords, disableDefaultUI: true, zoomControl: true,
     minZoom: 16.45, maxZoom: 20, restriction: { latLngBounds: campusBounds, strictBounds: false },
     styles: cleanLightModeStyles,
-    // require two-finger gesture on mobile and avoid accidental taps on POIs
+    // aggressive gesture handling helps keep the map interactive and prevents the page
+    // from scrolling when the user tries to pan/zoom on mobile devices
     gestureHandling: "greedy",
     clickableIcons: false,
   });
