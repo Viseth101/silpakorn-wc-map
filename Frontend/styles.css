@@ -1,8 +1,21 @@
 /* ========================================== */
 /* 1. BASE LAYOUT & MAP CONTAINER             */
 /* ========================================== */
-html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
-#map { width: 100vw; height: 100vh; background-color: #e5e3df; }
+html, body { 
+    margin: 0; 
+    padding: 0; 
+    height: 100%; 
+    width: 100%; /* Better than 100vw */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    overflow: hidden; 
+    overscroll-behavior: none; /* STOPS THE MOBILE RUBBER-BANDING BOUNCE! */
+    position: fixed; /* Prevents iOS Safari from allowing body scroll */
+}
+#map { 
+    width: 100%; /* Fixes horizontal overflow */
+    height: 100%; /* Fixes vertical overflow */
+    background-color: #e5e3df; 
+}
 
 /* simple fullscreen loader used during async operations */
 .loader-overlay {
@@ -63,9 +76,23 @@ input[type="checkbox"]:checked ~ .toggle-dot { transform: translateX(16px); }
 .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; cursor: pointer; margin-bottom: 8px; color: #374151; }
 .checkbox-container input[type="checkbox"] { width: 16px; height: 16px; margin: 0; flex-shrink: 0; cursor: pointer; accent-color: #1b3899; }
 .checkbox-container span { line-height: 1; margin: 0; }
-.time-range-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
-.time-picker { flex: 1; min-width: 80px; padding: 10px 8px; border-radius: 6px; border: 1px solid #d1d5db; font-family: inherit; font-size: 13px; }
-
+.time-range-row { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    gap: 4px; /* REDUCED from 8px */
+    width: 100%; 
+}
+.time-picker { 
+    flex: 1; 
+    min-width: 115px; /* THE MAGIC FIX: Forces browser to show AM/PM */
+    box-sizing: border-box; 
+    padding: 10px 4px; 
+    border-radius: 6px; 
+    border: 1px solid #d1d5db; 
+    font-family: inherit; 
+    font-size: 13px; 
+}
 /* ========================================== */
 /* 5. MENUS, POPUPS & AUTOCOMPLETE            */
 /* ========================================== */
@@ -76,7 +103,22 @@ input[type="checkbox"]:checked ~ .toggle-dot { transform: translateX(16px); }
 
 .filter-icon-btn { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; cursor: pointer; padding: 4px 6px; height: 26px; z-index: 2; transition: background-color 0.2s; display: flex; align-items: center; justify-content: center; }
 .filter-icon-btn:hover { background-color: #e5e7eb; }
-.filter-popup { position: absolute; top: 110%; right: 0; width: 280px; max-width: 90vw; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15); z-index: 20; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.2s ease; }
+.filter-popup { 
+    position: absolute; 
+    top: 110%; 
+    right: 0; 
+    width: 350px; /* INCREASED from 320px */
+    max-width: 95vw; /* INCREASED from 90vw */
+    background: white; 
+    padding: 15px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15); 
+    z-index: 20; 
+    opacity: 0; 
+    visibility: hidden; 
+    transform: translateY(-10px); 
+    transition: all 0.2s ease; 
+}
 .filter-popup.active { opacity: 1 !important; visibility: visible !important; transform: translateY(0) !important; }
 .pac-container { z-index: 10000 !important; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
