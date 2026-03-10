@@ -5,12 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="title">Silpakorn WC Map</title>
+    
     <link rel="icon" type="image/x-icon" href="./assets/silpakorn-icon.png">
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap" rel="stylesheet">
-
+    
     <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -28,12 +28,11 @@
     <div class="map-control top-right-search" id="searchContainer">
         <div style="position: relative; display: flex; align-items: center; width: 100%;">
             <span class="search-icon">🔍</span>
-            <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder"
-                placeholder="Search restrooms...">
-            <span id="clearSearchBtn"
-                style="position: absolute; right: 40px; cursor: pointer; display: none; color: #9ca3af; font-size: 16px;">✖</span>
+            <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Search restrooms...">
+            <span id="clearSearchBtn" style="position: absolute; right: 40px; cursor: pointer; display: none; color: #9ca3af; font-size: 16px;">✖</span>
             <button id="filterToggleBtn" class="filter-icon-btn" title="Filter by Time & Access">⏳</button>
         </div>
+        
         <ul id="searchSuggestions" class="suggestions-list"></ul>
 
         <div id="filterPopup" class="filter-popup">
@@ -51,6 +50,7 @@
                 <input type="checkbox" id="filter24h">
                 <span>Open 24h Only</span>
             </label>
+            
             <div style="margin-top: 10px; font-size: 13px;">
                 <label style="display: block; margin-bottom: 6px;">Or open during:</label>
                 <div class="time-range-row">
@@ -59,8 +59,8 @@
                     <input type="time" id="filterTimeTo" class="time-picker">
                 </div>
             </div>
-            <button id="applyFilterBtn" class="btn-primary" style="margin-top:16px; width:100%; padding: 8px;">Apply
-                Filter</button>
+            
+            <button id="applyFilterBtn" class="btn-primary" style="margin-top:16px; width:100%; padding: 8px;">Apply Filter</button>
         </div>
     </div>
 
@@ -70,14 +70,10 @@
             <span id="legendChevron" class="legend-chevron">▼</span>
         </div>
         <div class="legend-content" id="legendContent">
-            <div class="legend-item"><span class="legend-color" style="background-color: #10b981;"></span> <span
-                    data-i18n="statusOpen">Open</span></div>
-            <div class="legend-item"><span class="legend-color" style="background-color: #3b82f6;"></span> <span
-                    data-i18n="statusStudent">Students Only</span></div>
-            <div class="legend-item"><span class="legend-color" style="background-color: #f59e0b;"></span> <span
-                    data-i18n="statusStaff">Staff Only</span></div>
-            <div class="legend-item"><span class="legend-color" style="background-color: #9ca3af;"></span> <span
-                    data-i18n="statusClosed">Closed</span></div>
+            <div class="legend-item"><span class="legend-color" style="background-color: #10b981;"></span> <span data-i18n="statusOpen">Open</span></div>
+            <div class="legend-item"><span class="legend-color" style="background-color: #3b82f6;"></span> <span data-i18n="statusStudent">Students Only</span></div>
+            <div class="legend-item"><span class="legend-color" style="background-color: #f59e0b;"></span> <span data-i18n="statusStaff">Staff Only</span></div>
+            <div class="legend-item"><span class="legend-color" style="background-color: #9ca3af;"></span> <span data-i18n="statusClosed">Closed</span></div>
         </div>
     </div>
 
@@ -109,6 +105,34 @@
     </div>
 
     <button id="locateMeBtn" class="fab locate-fab" title="Find My Location">🎯</button>
+
+    <div id="sidePanel" class="map-control side-panel">
+        <div class="mobile-pull-tab" onclick="toggleDirectory(event)">
+            <div class="pull-indicator"></div>
+            <span style="font-size: 13px; font-weight: bold; color: #6b7280;" data-i18n="placesListTitle">Restroom Directory</span>
+        </div>
+        
+        <div class="panel-header" onclick="toggleDirectory(event)" style="cursor: pointer;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 class="desktop-title" data-i18n="placesListTitle" style="margin: 0; font-size: 15px; color: #1b3899;">Restroom Directory</h3>
+                <span id="directoryToggleIcon" class="desktop-title" style="font-size: 12px; color: #6b7280;">▼</span>
+            </div>
+            
+            <div class="sort-controls pill-group" onclick="event.stopPropagation()">
+                <label class="pill-radio">
+                    <input type="radio" name="sortOrder" value="alpha" checked onchange="updatePlacesList()">
+                    <span class="pill-label">A-Z</span>
+                </label>
+                <label class="pill-radio">
+                    <input type="radio" name="sortOrder" value="distance" id="sortDistanceBtn" disabled onchange="updatePlacesList()">
+                    <span class="pill-label">Nearest</span>
+                </label>
+            </div>
+        </div>
+        
+        <div id="placesListContainer" class="places-list"></div>
+    </div>
+
     <div id="map"></div>
 
     <button id="addPlaceFab" class="fab" title="Add new Place">
@@ -126,8 +150,7 @@
             <div class="form-grid">
                 <div class="form-group full-width">
                     <label for="placeTitle">Place Name (English) *Primary</label>
-                    <input type="text" id="placeTitle" class="form-control" placeholder="e.g. Science Building WC"
-                        required>
+                    <input type="text" id="placeTitle" class="form-control" placeholder="e.g. Science Building WC" required>
                 </div>
 
                 <div class="form-group full-width" style="margin-bottom: 5px;">
@@ -181,8 +204,7 @@
                             <button type="button" id="pickLocationBtn">📍 Pick Map Location</button>
                         </div>
                     </div>
-                    <p id="selectedCoordsText" style="font-size: 12px; color: #059669; margin-top: 6px; display: none;">
-                        ✅ Location pinned!</p>
+                    <p id="selectedCoordsText" style="font-size: 12px; color: #059669; margin-top: 6px; display: none;">✅ Location pinned!</p>
                 </div>
             </div>
 
@@ -202,6 +224,7 @@
     </div>
 
     <div id="toast" class="toast"></div>
+    
     <script src="script.js"></script>
     <script src="utils.js"></script>
 </body>

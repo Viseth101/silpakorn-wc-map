@@ -10,15 +10,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
+        /* ========================================== */
+        /* 1. BASE LAYOUT & TYPOGRAPHY                */
+        /* ========================================== */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; margin: 0; padding: 0; overflow: hidden; color: #1f2937; }
         body.lang-kh, body.lang-kh input, body.lang-kh select, body.lang-kh button { font-family: 'Battambang', sans-serif !important; }
 
+        /* ========================================== */
+        /* 2. OVERLAYS & MODALS                       */
+        /* ========================================== */
         #loginOverlay, #editModalOverlay, #addModalOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
         #editModalOverlay, #addModalOverlay { display: none; }
 
         .modal-box { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); width: 90%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
         .modal-box h2 { margin-top: 0; color: #1b3899; font-size: 1.5rem; margin-bottom: 15px;}
         
+        /* ========================================== */
+        /* 3. FORMS & INPUTS                          */
+        /* ========================================== */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .form-grid .full-width { grid-column: span 2; }
         .form-group { margin-bottom: 0; }
@@ -36,6 +45,9 @@
         .lang-inputs { display: flex; gap: 8px; margin-top: 10px; }
         .lang-inputs input { flex: 1; min-width: 0; }
 
+        /* ========================================== */
+        /* 4. IMAGE & LOCATION PICKERS                */
+        /* ========================================== */
         .image-row { display: flex; gap: 12px; height: 90px; }
         .image-section, .location-section { flex: 1; background: #f9fafb; border: 2px dashed #d1d5db; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; background-size: cover; background-position: center; transition: border-color 0.2s;}
         .image-section:hover, .location-section:hover { border-color: #1b3899; }
@@ -48,14 +60,27 @@
         .image-section.has-preview .clear-btn { display: flex; }
         .image-section .clear-btn { display: none; }
 
+        /* ========================================== */
+        /* 5. BUTTONS                                 */
+        /* ========================================== */
         .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; }
         .btn-primary { background: #1b3899; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; transition: opacity 0.2s; }
         .btn-primary:hover { opacity: 0.9; }
         .btn-cancel { background: transparent; color: #4b5563; padding: 10px 16px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; }
         .btn-cancel:hover { background: #f3f4f6; border-radius: 8px; }
 
+        .btn { flex: 1; padding: 8px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.8; }
+        .btn-approve { background-color: #10b981; color: white; }
+        .btn-reject { background-color: #ef4444; color: white; }
+        .btn-edit { background-color: #3b82f6; color: white; }
+
+        /* ========================================== */
+        /* 6. DASHBOARD LAYOUT & SIDEBAR              */
+        /* ========================================== */
         #dashboard { display: none; height: 100vh; width: 100vw; }
         #sidebar { width: 450px; background: white; height: 100%; overflow-y: auto; box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); z-index: 10; display: flex; flex-direction: column; }
+        #mapView { flex: 1; height: 100%; background: #e5e3df; position: relative; }
         
         .sidebar-header { padding: 20px 20px 0 20px; background: #ffffff; position: sticky; top: 0; z-index: 5; border-bottom: 1px solid #e5e7eb; }
         .header-top { display: flex; justify-content: space-between; align-items: center; }
@@ -65,37 +90,36 @@
         .btn-backup { background: #10b981; color: white; }
         .btn-add { background: #1b3899; color: white; }
 
+        /* Tabs */
         .tabs { display: flex; margin-top: 15px; }
         .tab { flex: 1; text-align: center; padding: 12px 0; cursor: pointer; font-weight: 600; color: #6b7280; border-bottom: 3px solid transparent; transition: all 0.2s; }
         .tab.active { color: #1b3899; border-bottom-color: #1b3899; }
+        .tab-content { display: none; padding: 20px; flex: 1; }
+        .tab-content.active { display: block; }
 
+        /* Filters */
         .admin-filter-bar { background: #f3f4f6; padding: 12px; border-radius: 8px; margin: 15px 20px; display: flex; flex-direction: column; gap: 10px; }
         .admin-filter-bar input[type="text"], .admin-filter-bar select { padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; width: 100%; box-sizing: border-box; }
         .admin-time-row { display: flex; align-items: center; gap: 10px; }
 
-        .tab-content { display: none; padding: 20px; flex: 1; }
-        .tab-content.active { display: block; }
-        
-        #mapView { flex: 1; height: 100%; background: #e5e3df; position: relative; }
-        
+        /* List Cards */
         .card { border: 1px solid #d1d5db; padding: 16px; border-radius: 8px; margin-bottom: 16px; background: #fafafa; transition: border-color 0.2s, box-shadow 0.2s; cursor: pointer; }
         .card:hover { border-color: #1b3899; box-shadow: 0 4px 10px rgba(27, 56, 153, 0.1); }
         .card-info h3 { margin: 0 0 8px 0; color: #111827; font-size: 16px; display: flex; align-items: center; gap: 8px; }
         .status-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
         .card-info p { margin: 4px 0; font-size: 13px; color: #4b5563; }
         .card-actions { display: flex; gap: 10px; margin-top: 15px; }
-        .btn { flex: 1; padding: 8px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; transition: opacity 0.2s; }
-        .btn:hover { opacity: 0.8; }
-        .btn-approve { background-color: #10b981; color: white; }
-        .btn-reject { background-color: #ef4444; color: white; }
-        .btn-edit { background-color: #3b82f6; color: white; }
         .empty-state { text-align: center; color: #6b7280; font-style: italic; padding: 40px 20px; }
 
+        /* Toast Notifications */
         .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); color: white; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 500; z-index: 9999; opacity: 0; visibility: hidden; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; }
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
         .toast.success { background-color: #10b981; }
         .toast.error { background-color: #ef4444; }
 
+        /* ========================================== */
+        /* 7. RESPONSIVE QUERIES                      */
+        /* ========================================== */
         @media(max-width: 768px) {
             #dashboard { flex-direction: column-reverse; }
             #sidebar { width: 100%; height: 50vh; }
@@ -142,8 +166,7 @@
                 <div class="form-group full-width">
                     <label>Operating Hours:</label>
                     <label class="checkbox-container">
-                        <input type="checkbox" id="edit24hCheckbox"
-                            onchange="document.getElementById('editTimeFrom').disabled = this.checked; document.getElementById('editTimeTo').disabled = this.checked;">
+                        <input type="checkbox" id="edit24hCheckbox" onchange="document.getElementById('editTimeFrom').disabled = this.checked; document.getElementById('editTimeTo').disabled = this.checked;">
                         <span>Open 24 Hours</span>
                     </label>
                     <div class="time-range-row">
@@ -216,8 +239,7 @@
                 <div class="form-group full-width">
                     <label>Operating Hours:</label>
                     <label class="checkbox-container">
-                        <input type="checkbox" id="add24hCheckbox"
-                            onchange="document.getElementById('addTimeFrom').disabled = this.checked; document.getElementById('addTimeTo').disabled = this.checked;">
+                        <input type="checkbox" id="add24hCheckbox" onchange="document.getElementById('addTimeFrom').disabled = this.checked; document.getElementById('addTimeTo').disabled = this.checked;">
                         <span>Open 24 Hours</span>
                     </label>
                     <div class="time-range-row">
@@ -270,8 +292,7 @@
                     <h1>Admin Dashboard</h1>
                     <div class="header-actions">
                         <button class="action-btn btn-backup" onclick="downloadBackup()">📥 Backup</button>
-                        <button class="action-btn btn-add"
-                            onclick="document.getElementById('addModalOverlay').style.display='flex'; document.getElementById('addImage').value=''; setSectionBackground('addImageSection','');">➕ Add Place</button>
+                        <button class="action-btn btn-add" onclick="document.getElementById('addModalOverlay').style.display='flex'; document.getElementById('addImage').value=''; setSectionBackground('addImageSection','');">➕ Add Place</button>
                     </div>
                 </div>
 
@@ -321,12 +342,18 @@
     <script src="utils.js"></script>
 
     <script>
+        // ==========================================
+        // GLOBAL VARIABLES
+        // ==========================================
         let sessionPassword = "";
         let map;
         let adminMarkers = [];
         let currentTab = "pending";
         let allApprovedPlaces = [];
 
+        // ==========================================
+        // UI HELPERS (Image Previews & Toasts)
+        // ==========================================
         function setSectionBackground(sectionId, url) {
             const sec = document.getElementById(sectionId);
             if (sec) {
@@ -339,6 +366,7 @@
                 }
             }
         }
+
         function initImagePreviews() {
             const addInput = document.getElementById('addImage');
             const editInput = document.getElementById('editImage');
@@ -378,7 +406,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', initImagePreviews);
-        initImagePreviews();
 
         function showToast(message, type = "success") {
             const toast = document.getElementById("toast");
@@ -387,6 +414,9 @@
             setTimeout(() => { toast.classList.remove("show"); }, 3000);
         }
 
+        // ==========================================
+        // AUTHENTICATION & INITIALIZATION
+        // ==========================================
         async function login() {
             const passInput = document.getElementById("adminPassword").value;
             if (!passInput) return showToast("Please enter a password.", "error");
@@ -402,8 +432,13 @@
                     document.getElementById('loginOverlay').style.display = 'none';
                     document.getElementById('dashboard').style.display = 'flex';
                     initAdminMap();
-                } else { showToast("Incorrect password!", "error"); }
-            } catch (e) { console.error("Login error", e); }
+                } else { 
+                    showToast("Incorrect password!", "error"); 
+                }
+            } catch (e) { 
+                console.error("Login error", e); 
+                showToast("Network error during login.", "error");
+            }
         }
 
         document.getElementById("adminPassword").addEventListener("keypress", (e) => {
@@ -418,7 +453,6 @@
                 window.loadMapData = function () {
                     map = new google.maps.Map(document.getElementById("mapView"), {
                         zoom: 16.5, center: { lat: 13.8188, lng: 100.0402 }, disableDefaultUI: false,
-                        // follow same mobile behavior as public map
                         gestureHandling: "greedy",
                         clickableIcons: false,
                     });
@@ -429,9 +463,14 @@
                 script.src = `https://maps.googleapis.com/maps/api/js?key=${config.mapsApiKey}&callback=loadMapData`;
                 script.async = true; script.defer = true;
                 document.head.appendChild(script);
-            } catch (err) { console.error("Failed to load map", err); }
+            } catch (err) { 
+                console.error("Failed to load map config", err); 
+            }
         }
 
+        // ==========================================
+        // DATA FETCHING & TAB MANAGEMENT
+        // ==========================================
         function switchTab(tabName, element) {
             currentTab = tabName;
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -497,6 +536,9 @@
             renderList(filtered, 'manageList');
         }
 
+        // ==========================================
+        // LIST RENDERING
+        // ==========================================
         function renderList(places, containerId) {
             const list = document.getElementById(containerId);
             list.innerHTML = '';
@@ -506,24 +548,20 @@
             if (places.length === 0) { list.innerHTML = `<div class="empty-state">🎉 No Places found!</div>`; return; }
 
             places.forEach(place => {
-                
-                let color = "#10b981"; 
-                if (currentTab === 'pending') {
-                    color = "#eab308"; 
-                } else {
-                    color = getMarkerColor(place); 
-                }
+                let color = currentTab === 'pending' ? "#eab308" : getMarkerColor(place); 
 
                 const svgIcon = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
-                <circle cx="14" cy="16" r="10" fill="rgba(0,0,0,0.3)" />
-                <circle cx="14" cy="14" r="10" fill="${color}" stroke="#ffffff" stroke-width="2.5" />
-            </svg>
-        `;
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
+                        <circle cx="14" cy="16" r="10" fill="rgba(0,0,0,0.3)" />
+                        <circle cx="14" cy="14" r="10" fill="${color}" stroke="#ffffff" stroke-width="2.5" />
+                    </svg>
+                `;
 
                 const marker = new google.maps.Marker({
                     position: { lat: place.lat, lng: place.lng },
-                    map: map, title: place.names ? place.names.en : place.building.en, animation: google.maps.Animation.DROP,
+                    map: map, 
+                    title: place.names ? place.names.en : place.building.en, 
+                    animation: google.maps.Animation.DROP,
                     icon: { url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svgIcon), anchor: new google.maps.Point(14, 14) }
                 });
                 adminMarkers.push(marker);
@@ -541,40 +579,38 @@
 
                 if (currentTab === 'pending') {
                     actionButtons = `
-                <button class="btn btn-approve" onclick="handleAction(event, ${place.id}, 'approve')">Approve ✓</button>
-                <button class="btn btn-edit" onclick="openEditModal(event, '${placeDataStr}')">Edit ✏️</button>
-                <button class="btn btn-reject" onclick="handleAction(event, ${place.id}, 'reject')">Reject ✕</button>
-            `;
+                        <button class="btn btn-approve" onclick="handleAction(event, ${place.id}, 'approve')">Approve ✓</button>
+                        <button class="btn btn-edit" onclick="openEditModal(event, '${placeDataStr}')">Edit ✏️</button>
+                        <button class="btn btn-reject" onclick="handleAction(event, ${place.id}, 'reject')">Reject ✕</button>
+                    `;
                 } else {
                     actionButtons = `
-                <button class="btn btn-edit" onclick="openEditModal(event, '${placeDataStr}')">Edit ✏️</button>
-                <button class="btn btn-reject" onclick="handleAction(event, ${place.id}, 'reject')">Delete 🗑️</button>
-            `;
+                        <button class="btn btn-edit" onclick="openEditModal(event, '${placeDataStr}')">Edit ✏️</button>
+                        <button class="btn btn-reject" onclick="handleAction(event, ${place.id}, 'reject')">Delete 🗑️</button>
+                    `;
                 }
 
-                // FIX: Properly extract the English name whether it's an object or a string
                 let displayName = "Unknown Place";
                 if (place.names && place.names.en) displayName = place.names.en;
                 else if (place.building && place.building.en) displayName = place.building.en;
                 else if (typeof place.building === "string") displayName = place.building;
 
                 card.innerHTML = `
-            <div class="card-info">
-                <h3><span class="status-dot" style="background-color: ${color};"></span> ${displayName} </h3>
-                <p><strong>🕒 Hours:</strong> ${place.operatingHours}</p>
-                <p><strong>👥 Access:</strong> ${
-                    place.accessType === 'staff' ? 'Staff only' :
-                    place.accessType === 'student' ? 'Students only' :
-                    'All'
-                }</p>
-                <p><strong>📝 Note:</strong> ${place.note || place.notes || 'None'}</p>
-            </div>
-            <div class="card-actions">${actionButtons}</div>
-        `;
+                    <div class="card-info">
+                        <h3><span class="status-dot" style="background-color: ${color};"></span> ${displayName} </h3>
+                        <p><strong>🕒 Hours:</strong> ${place.operatingHours}</p>
+                        <p><strong>👥 Access:</strong> ${place.accessType === 'staff' ? 'Staff only' : place.accessType === 'student' ? 'Students only' : 'All'}</p>
+                        <p><strong>📝 Note:</strong> ${place.note || place.notes || 'None'}</p>
+                    </div>
+                    <div class="card-actions">${actionButtons}</div>
+                `;
                 list.appendChild(card);
             });
         }
 
+        // ==========================================
+        // ACTION HANDLERS (Approve / Reject)
+        // ==========================================
         async function handleAction(event, id, action) {
             event.stopPropagation();
             if (!confirm(`Are you sure you want to ${action === 'reject' ? 'delete/reject' : 'approve'} this Place?`)) return;
@@ -584,9 +620,24 @@
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: id, password: sessionPassword })
                 });
-                if (res.ok) { showToast(`Successfully completed action.`); loadDataForCurrentTab(); }
-                else showToast("Action failed. Check password.", "error");
-            } catch (err) { console.error(err); }
+                
+                if (res.ok) { 
+                    showToast(`Successfully completed action.`); 
+                    loadDataForCurrentTab(); 
+                } else {
+                    // SMART ERROR HANDLING: Reads exactly why the server failed!
+                    let errData;
+                    try {
+                        errData = await res.json();
+                    } catch(e) {
+                        errData = { error: "Server crashed or returned bad data." };
+                    }
+                    showToast(errData.error || "Action failed.", "error");
+                }
+            } catch (err) { 
+                console.error(err); 
+                showToast("Network error preventing action.", "error");
+            }
         }
 
         async function downloadBackup() {
@@ -604,15 +655,16 @@
             } catch (e) { showToast("Backup failed.", "error"); }
         }
 
+        // ==========================================
+        // EDIT & ADD MODAL LOGIC
+        // ==========================================
         function openEditModal(event, placeDataStr) {
             event.stopPropagation();
             const place = JSON.parse(decodeURIComponent(placeDataStr));
 
             document.getElementById('editId').value = place.id;
 
-            // FIX: Populate modal perfectly regardless of database format
             const langData = place.names || place.building;
-            
             if (langData && typeof langData === 'object') {
                 document.getElementById('editNameEn').value = langData.en || "";
                 document.getElementById('editNameTh').value = langData.th || "";
@@ -637,7 +689,6 @@
 
             const role = checkAccessRole(place.accessType || place.access || "");
             document.getElementById('editAccess').value = role;
-
             document.getElementById('editNote').value = place.note || place.notes || "";
             document.getElementById('editLat').value = place.lat;
             document.getElementById('editLng').value = place.lng;
@@ -714,9 +765,16 @@
 
             try {
                 const res = await fetch('/api/edit-place', { method: 'POST', body: form });
-                if (res.ok) { closeEditModal(); showToast("Place updated!", "success"); loadDataForCurrentTab(); }
-                else showToast("Failed to save changes.", "error");
-            } catch (err) { console.error(err); }
+                if (res.ok) { 
+                    closeEditModal(); 
+                    showToast("Place updated!", "success"); 
+                    loadDataForCurrentTab(); 
+                } else {
+                    let errData;
+                    try { errData = await res.json(); } catch(e) { errData = {}; }
+                    showToast(errData.error || "Failed to save changes.", "error");
+                }
+            } catch (err) { console.error(err); showToast("Network error.", "error"); }
         }
 
         function startAddPosition() {
@@ -777,8 +835,12 @@
                     setSectionBackground('addImageSection', '');
                     showToast("Added instantly!", "success");
                     loadDataForCurrentTab();
-                } else showToast("Failed to add.", "error");
-            } catch (err) { console.error(err); }
+                } else {
+                    let errData;
+                    try { errData = await res.json(); } catch(e) { errData = {}; }
+                    showToast(errData.error || "Failed to add place.", "error");
+                }
+            } catch (err) { console.error(err); showToast("Network error.", "error"); }
         }
     </script>
 </body>
