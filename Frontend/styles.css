@@ -210,8 +210,19 @@ button.gm-ui-hover-effect { display: none !important; }
     max-height: 52px; 
     transition: max-height 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
 }
-.side-panel.is-open { max-height: calc(100vh - 85px - 340px); }
-.side-panel.is-open.legend-collapsed { max-height: calc(100vh - 85px - 235px); }
+
+/* Desktop/iPad: Open state reaches down to the legend */
+/* FIX: Using 'dvh' accounts for Safari's physical browser UI bars */
+.side-panel.is-open { 
+    max-height: calc(100dvh - 425px); 
+    min-height: 150px; /* Safety fallback in case screen is very short */
+}
+/* Stretches deeper if the legend is closed */
+.side-panel.is-open.legend-collapsed { 
+    max-height: calc(100dvh - 320px); 
+    min-height: 150px;
+}
+
 .side-panel:not(.is-open) .sort-controls { display: none !important; }
 
 /* Panel Header & Titles */
@@ -334,8 +345,8 @@ body.dark-theme .pill-radio input[type="radio"]:checked + .pill-label {
         margin: 0 auto; 
         width: 100%; 
         max-width: 450px;
-        height: 60vh; 
-        max-height: 60vh !important; 
+        height: 60dvh; /* FIX: Changed to dvh */
+        max-height: 60dvh !important; /* FIX: Changed to dvh */
         border-radius: 20px 20px 0 0;
         transform: translateY(calc(100% - 45px)); 
         transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1);
@@ -359,7 +370,7 @@ body.dark-theme .pill-radio input[type="radio"]:checked + .pill-label {
     body.sheet-is-open .hamburger-btn,
     body.sheet-is-open .legend-control,
     body.sheet-is-open .bottom-left-controls {
-        transform: translateY(calc(-60vh + 45px)); 
+        transform: translateY(calc(-60dvh + 45px)); /* FIX: Changed to dvh */
     }
     
     .form-grid { grid-template-columns: 1fr; }
