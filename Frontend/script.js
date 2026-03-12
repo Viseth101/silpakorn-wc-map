@@ -16,10 +16,10 @@ let userLocationMarker = null;
 
 const silpakornCoords = { lat: 13.8188, lng: 100.0402 };
 const campusBounds = {
-  north: 13.825,
-  south: 13.812,
-  west: 100.034,
-  east: 100.047,
+  north: 13.835,
+  south: 13.805,
+  west: 100.020,
+  east: 100.060,
 };
 
 // ==========================================
@@ -55,7 +55,7 @@ function initMap() {
     center: silpakornCoords,
     disableDefaultUI: true,
     zoomControl: true,
-    minZoom: 16.45,
+    minZoom: 15.0, 
     maxZoom: 20,
     restriction: { latLngBounds: campusBounds, strictBounds: false },
     styles: cleanLightModeStyles,
@@ -73,7 +73,6 @@ function initMap() {
     document.getElementById("searchSuggestions").classList.remove("active");
     document.getElementById("filterPopup").classList.remove("active");
 
-    // Close directory ONLY on mobile screens
     if (window.innerWidth <= 768 && window.toggleDirectory) {
       const sidePanel = document.getElementById("sidePanel");
       if (sidePanel && sidePanel.classList.contains("is-open")) {
@@ -285,7 +284,6 @@ function drawCampusPolygon() {
     document.getElementById("searchSuggestions").classList.remove("active");
     document.getElementById("filterPopup").classList.remove("active");
 
-    // Close directory ONLY on mobile screens
     if (window.innerWidth <= 768 && window.toggleDirectory) {
       const sidePanel = document.getElementById("sidePanel");
       if (sidePanel && sidePanel.classList.contains("is-open")) {
@@ -322,7 +320,11 @@ function setupMobileAndFilterListeners() {
 
   document.getElementById("mobileMenuToggle").addEventListener("click", (e) => {
     e.stopPropagation();
-    document.getElementById("bottomControls").classList.toggle("menu-expanded");
+    const btn = document.getElementById("mobileMenuToggle");
+    const menu = document.getElementById("bottomControls");
+    menu.classList.toggle("menu-expanded");
+    btn.classList.toggle("is-active");
+    btn.innerText = btn.classList.contains("is-active") ? "✖" : "☰";
   });
 
   filterToggleBtn.addEventListener("click", (e) => {
@@ -351,10 +353,11 @@ function setupMobileAndFilterListeners() {
     const mobileMenuToggle = document.getElementById("mobileMenuToggle");
     if (bottomControls && bottomControls.classList.contains("menu-expanded") && !bottomControls.contains(e.target) && !mobileMenuToggle.contains(e.target)) {
       bottomControls.classList.remove("menu-expanded");
+      mobileMenuToggle.classList.remove("is-active");
+      mobileMenuToggle.innerText = "☰";
     }
   });
 
-  // --- Unified Directory Toggle ---
   window.toggleDirectory = function (e, forceState = null) {
     if (e) e.stopPropagation();
     const panel = document.getElementById("sidePanel");
@@ -377,7 +380,6 @@ function setupMobileAndFilterListeners() {
     if (isOpening) {
       document.body.classList.add("sheet-is-open");
 
-      // Auto-close legend ONLY if opening the directory on mobile
       if (window.innerWidth <= 768) {
         const legendContent = document.getElementById("legendContent");
         if (legendContent && !legendContent.classList.contains("collapsed")) {
@@ -385,12 +387,15 @@ function setupMobileAndFilterListeners() {
           document.getElementById("legendChevron").classList.add("rotated");
         }
         const bc = document.getElementById("bottomControls");
-        if (bc) bc.classList.remove("menu-expanded");
+        const btn = document.getElementById("mobileMenuToggle");
+        if (bc) {
+            bc.classList.remove("menu-expanded");
+            if(btn) { btn.classList.remove("is-active"); btn.innerText = "☰"; }
+        }
       }
     } else {
       document.body.classList.remove("sheet-is-open");
 
-      // Re-open legend when directory closes on mobile
       if (window.innerWidth <= 768) {
         const legendContent = document.getElementById("legendContent");
         if (legendContent && legendContent.classList.contains("collapsed")) {
@@ -402,12 +407,41 @@ function setupMobileAndFilterListeners() {
   };
 }
 
+// 🌟 NEW: Logic for the Filter Menu Dual Toggle
+window.toggleFilterHours = function(checkbox) {
+    const is24h = checkbox.checked;
+    const timeFrom = document.getElementById("filterTimeFrom");
+    const timeTo = document.getElementById("filterTimeTo");
+    const labelSpecific = document.getElementById("filterLabelSpecific");
+    const label24h = document.getElementById("filterLabel24h");
+    const timeGroup = document.getElementById("filterTimeInputGroup");
+
+    timeFrom.disabled = is24h;
+    timeTo.disabled = is24h;
+    
+    if (is24h) {
+        label24h.classList.add("active");
+        labelSpecific.classList.remove("active");
+        timeGroup.style.opacity = "0.4";
+        timeGroup.style.pointerEvents = "none";
+        timeFrom.value = "";
+        timeTo.value = "";
+    } else {
+        labelSpecific.classList.add("active");
+        label24h.classList.remove("active");
+        timeGroup.style.opacity = "1";
+        timeGroup.style.pointerEvents = "auto";
+    }
+    applyFilters();
+};
+
 function applyFilters() {
   const query = document.getElementById("searchInput").value.toLowerCase();
   const filter24h = document.getElementById("filter24h").checked;
   const filterFrom = document.getElementById("filterTimeFrom").value;
   const filterTo = document.getElementById("filterTimeTo").value;
-  const filterAccess = document.getElementById("filterAccess").value;
+  const filterAccessElement = document.querySelector('input[name="filterAccess"]:checked');
+  const filterAccess = filterAccessElement ? filterAccessElement.value : "any";
 
   allMarkers.forEach((item) => {
     let textMatch = item.title.includes(query);
@@ -451,18 +485,30 @@ function handleSearchInput() {
     return;
   }
 
-  const matches = allMarkers.filter((item) => item.title.includes(query) && item.passesTimeFilter);
+  let sortedPlaces = updatePlacesList() || [];
 
-  if (matches.length > 0) {
+  if (query) {
+    sortedPlaces = sortedPlaces.filter((item) => item.title.includes(query));
+  }
+
+  if (sortedPlaces.length > 0) {
     suggestionsBox.classList.add("active");
-    matches.forEach((match) => {
+    sortedPlaces.forEach((match) => {
       const li = document.createElement("li");
-      li.innerText = match.raw.building;
+
+      let distText = "";
+      if (userCoords) {
+        const dist = calculateDistance(userCoords.lat, userCoords.lng, match.raw.lat, match.raw.lng);
+        distText = `<span style="float:right; font-size: 11px; color:#10b981;">${dist > 1000 ? (dist / 1000).toFixed(1) + "km" : Math.round(dist) + "m"}</span>`;
+      }
+
+      li.innerHTML = `${match.raw.building} ${distText}`;
       li.onclick = () => {
         document.getElementById("searchInput").value = match.raw.building;
         suggestionsBox.classList.remove("active");
         applyFilters();
         map.panTo(match.markerObject.getPosition());
+        map.setZoom(18);
         google.maps.event.trigger(match.markerObject, "click");
       };
       suggestionsBox.appendChild(li);
@@ -473,7 +519,7 @@ function handleSearchInput() {
 }
 
 // ==========================================
-// 6. ADD NEW PLACE, GEOLOCATION, AUTOCOMPLETE
+// 6. ADD NEW PLACE, GEOLOCATION & DUAL-TOGGLE
 // ==========================================
 function setupLocationListener() {
   document.getElementById("locateMeBtn").addEventListener("click", () => {
@@ -481,16 +527,14 @@ function setupLocationListener() {
       return showToast("Browser doesn't support geolocation.", "error");
     }
 
-    // If tracking is already active, just snap the camera back to the user's current spot
     if (userCoords && userLocationMarker) {
         map.panTo(userCoords);
-        map.setZoom(17);
+        map.setZoom(18.5); 
         return;
     }
 
     showToast("Locating you...", "success");
 
-    // Start live tracking using watchPosition instead of getCurrentPosition
     if (!watchId) {
         const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
         
@@ -499,18 +543,15 @@ function setupLocationListener() {
             const pos = { lat: position.coords.latitude, lng: position.coords.longitude };
             userCoords = pos; 
             
-            // Unlock the 'Nearest' button and update live distances as they walk!
             document.getElementById("sortDistanceBtn").disabled = false; 
             updatePlacesList(); 
 
-            // Allow map to zoom out if they are far away from campus
             const isOutsideCampus = pos.lat < campusBounds.south || pos.lat > campusBounds.north || pos.lng < campusBounds.west || pos.lng > campusBounds.east;
             if (isOutsideCampus) map.setOptions({ restriction: null, minZoom: 5 });
 
             if (!userLocationMarker) {
-              // First time getting location: Drop the marker and pan camera
               map.panTo(pos);
-              map.setZoom(17);
+              map.setZoom(18.5); 
               userLocationMarker = new google.maps.Marker({
                 position: pos,
                 map: map,
@@ -518,7 +559,6 @@ function setupLocationListener() {
                 icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: "#3b82f6", fillOpacity: 1, strokeWeight: 2, strokeColor: "#ffffff" },
               });
             } else {
-              // Location updated: Smoothly move the blue dot to follow the user
               userLocationMarker.setPosition(pos);
             }
           },
@@ -549,13 +589,31 @@ function initAutocomplete() {
 
 const addPlaceModal = document.getElementById("addPlaceModal");
 const mapConfirmUI = document.getElementById("mapConfirmUI");
+
+// Dual Toggle Logic for Operating Hours in Modal
 const is24hCheckbox = document.getElementById("is24hCheckbox");
 const placeTimeFrom = document.getElementById("placeTimeFrom");
 const placeTimeTo = document.getElementById("placeTimeTo");
+const labelSpecific = document.getElementById("labelSpecific");
+const label24h = document.getElementById("label24h");
+const timeInputGroup = document.getElementById("timeInputGroup");
 
 is24hCheckbox.addEventListener("change", (e) => {
-  placeTimeFrom.disabled = e.target.checked;
-  placeTimeTo.disabled = e.target.checked;
+  const is24h = e.target.checked;
+  placeTimeFrom.disabled = is24h;
+  placeTimeTo.disabled = is24h;
+  
+  if (is24h) {
+      label24h.classList.add("active");
+      labelSpecific.classList.remove("active");
+      timeInputGroup.style.opacity = "0.4";
+      timeInputGroup.style.pointerEvents = "none";
+  } else {
+      labelSpecific.classList.add("active");
+      label24h.classList.remove("active");
+      timeInputGroup.style.opacity = "1";
+      timeInputGroup.style.pointerEvents = "auto";
+  }
 });
 
 addPlaceModal.addEventListener("click", (e) => {
@@ -642,7 +700,8 @@ document.getElementById("submitPlaceBtn").addEventListener("click", async () => 
   const cnName = document.getElementById("placeTitleCn") ? document.getElementById("placeTitleCn").value : "";
   const khName = document.getElementById("placeTitleKh") ? document.getElementById("placeTitleKh").value : "";
 
-  const access = document.getElementById("placeAccess").value;
+  const accessElement = document.querySelector('input[name="submitAccess"]:checked');
+  const access = accessElement ? accessElement.value : "all";
   const note = document.getElementById("placeNote").value;
 
   let openTime = "Not specified";
@@ -700,9 +759,17 @@ function resetForm() {
   if (document.getElementById("placeTitleCn")) document.getElementById("placeTitleCn").value = "";
   if (document.getElementById("placeTitleKh")) document.getElementById("placeTitleKh").value = "";
 
-  document.getElementById("placeAccess").value = "all";
+  const defaultAccess = document.querySelector('input[name="submitAccess"][value="all"]');
+  if(defaultAccess) defaultAccess.checked = true;
+
   document.getElementById("placeNote").value = "";
+  
   is24hCheckbox.checked = false;
+  labelSpecific.classList.add("active");
+  label24h.classList.remove("active");
+  timeInputGroup.style.opacity = "1";
+  timeInputGroup.style.pointerEvents = "auto";
+  
   placeTimeFrom.value = "";
   placeTimeTo.value = "";
   placeTimeFrom.disabled = false;
@@ -806,7 +873,7 @@ function openFullscreenImage(imgUrl) {
 }
 
 // ==========================================
-// 8. DIRECTORY SORTING & SEARCH OVERRIDES
+// 8. DIRECTORY SORTING
 // ==========================================
 window.updatePlacesList = function () {
   const container = document.getElementById("placesListContainer");
@@ -831,10 +898,16 @@ window.updatePlacesList = function () {
   }
 
   container.innerHTML = "";
+  
+  const staffText = translations[currentLang]?.["statusStaff"] || "Staff Only";
+  const studentText = translations[currentLang]?.["statusStudent"] || "Students Only";
+  const allText = translations[currentLang]?.["statusAll"] || "All";
+
   visiblePlaces.forEach((item) => {
     const div = document.createElement("div");
     div.className = "place-list-item";
-    const role = item.raw.accessType === "staff" ? "Staff Only" : item.raw.accessType === "student" ? "Students Only" : "All";
+    
+    const role = item.raw.accessType === "staff" ? staffText : item.raw.accessType === "student" ? studentText : allText;
 
     let distText = "";
     if (userCoords) {
@@ -855,43 +928,3 @@ window.updatePlacesList = function () {
 
   return visiblePlaces;
 };
-
-// Override the original search to use the new sorting engine logic
-function handleSearchInput() {
-  const query = document.getElementById("searchInput").value.toLowerCase();
-  const suggestionsBox = document.getElementById("searchSuggestions");
-  suggestionsBox.innerHTML = "";
-
-  applyFilters();
-  let sortedPlaces = updatePlacesList() || [];
-
-  if (query) {
-    sortedPlaces = sortedPlaces.filter((item) => item.title.includes(query));
-  }
-
-  if (sortedPlaces.length > 0) {
-    suggestionsBox.classList.add("active");
-    sortedPlaces.forEach((match) => {
-      const li = document.createElement("li");
-
-      let distText = "";
-      if (userCoords) {
-        const dist = calculateDistance(userCoords.lat, userCoords.lng, match.raw.lat, match.raw.lng);
-        distText = `<span style="float:right; font-size: 11px; color:#10b981;">${dist > 1000 ? (dist / 1000).toFixed(1) + "km" : Math.round(dist) + "m"}</span>`;
-      }
-
-      li.innerHTML = `${match.raw.building} ${distText}`;
-      li.onclick = () => {
-        document.getElementById("searchInput").value = match.raw.building;
-        suggestionsBox.classList.remove("active");
-        applyFilters();
-        map.panTo(match.markerObject.getPosition());
-        map.setZoom(18);
-        google.maps.event.trigger(match.markerObject, "click");
-      };
-      suggestionsBox.appendChild(li);
-    });
-  } else {
-    suggestionsBox.classList.remove("active");
-  }
-}

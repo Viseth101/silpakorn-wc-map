@@ -36,31 +36,48 @@
         <ul id="searchSuggestions" class="suggestions-list"></ul>
 
         <div id="filterPopup" class="filter-popup">
-            <h4 style="margin-top: 0; font-size: 14px; margin-bottom: 12px;">Filter Restrooms</h4>
+            <h4 data-i18n="filterTitle" style="margin: 0; font-size: 14px; margin-bottom: 12px;">Filter Restrooms</h4>
 
-            <label style="display: block; font-size: 13px; margin-bottom: 6px;">Access:</label>
-            <select id="filterAccess" class="form-control" style="padding: 6px; font-size: 13px; margin-bottom: 12px;">
-                <option value="any">Any Access</option>
-                <option value="all">All (Staff & Students)</option>
-                <option value="student">Students only</option>
-                <option value="staff">Staff only</option>
-            </select>
+            <label data-i18n="modalAccess" style="display: block; font-size: 13px; margin-bottom: 6px;">Access:</label>
+            <div class="pill-group" style="margin-bottom: 15px; flex-wrap: wrap;">
+                <label class="pill-radio">
+                    <input type="radio" name="filterAccess" value="any" checked onchange="applyFilters()">
+                    <span class="pill-label" data-i18n="filterAny">Any</span>
+                </label>
+                <label class="pill-radio">
+                    <input type="radio" name="filterAccess" value="all" onchange="applyFilters()">
+                    <span class="pill-label" data-i18n="filterAll">All</span>
+                </label>
+                <label class="pill-radio">
+                    <input type="radio" name="filterAccess" value="student" onchange="applyFilters()">
+                    <span class="pill-label" data-i18n="filterStudents">Students</span>
+                </label>
+                <label class="pill-radio">
+                    <input type="radio" name="filterAccess" value="staff" onchange="applyFilters()">
+                    <span class="pill-label" data-i18n="filterStaff">Staff</span>
+                </label>
+            </div>
 
-            <label class="checkbox-container">
-                <input type="checkbox" id="filter24h">
-                <span>Open 24h Only</span>
-            </label>
-            
-            <div style="margin-top: 10px; font-size: 13px;">
-                <label style="display: block; margin-bottom: 6px;">Or open during:</label>
-                <div class="time-range-row">
-                    <input type="time" id="filterTimeFrom" class="time-picker">
-                    <span style="color: #6b7280; font-weight: bold;">-</span>
-                    <input type="time" id="filterTimeTo" class="time-picker">
-                </div>
+            <label data-i18n="modalOpHours" style="display: block; font-size: 13px; margin-bottom: 6px;">Operating Hours:</label>
+            <div class="dual-toggle-container" style="padding: 8px;">
+                <span id="filterLabelSpecific" class="dual-toggle-label active" data-i18n="filterSpecific">Specific Hours</span>
+                <label style="margin: 0; cursor: pointer; display: flex;">
+                    <div class="toggle-wrapper">
+                        <input type="checkbox" id="filter24h" class="sr-only" onchange="toggleFilterHours(this)">
+                        <div class="toggle-track"></div>
+                        <div class="toggle-dot"></div>
+                    </div>
+                </label>
+                <span id="filterLabel24h" class="dual-toggle-label" data-i18n="filter24h">24 Hours</span>
             </div>
             
-            <button id="applyFilterBtn" class="btn-primary" style="margin-top:16px; width:100%; padding: 8px;">Apply Filter</button>
+            <div class="time-range-row" id="filterTimeInputGroup" style="transition: opacity 0.3s; margin-bottom: 15px;">
+                <input type="time" id="filterTimeFrom" class="time-picker" onchange="applyFilters()">
+                <span style="color: #6b7280; font-weight: bold;">-</span>
+                <input type="time" id="filterTimeTo" class="time-picker" onchange="applyFilters()">
+            </div>
+            
+            <button id="applyFilterBtn" class="btn-primary" data-i18n="applyFilter" style="margin-top:10px; width:100%; padding: 8px;">Apply Filter</button>
         </div>
     </div>
 
@@ -96,7 +113,7 @@
                 <div class="toggle-dot"></div>
             </div>
         </label>
-        <select id="lang-select" class="form-control" onchange="changeLanguage(this.value)">
+        <select id="lang-select" class="form-control" style="border-radius: 999px;" onchange="changeLanguage(this.value)">
             <option value="en">English</option>
             <option value="th">ภาษาไทย</option>
             <option value="cn">中文</option>
@@ -121,11 +138,11 @@
             <div class="sort-controls pill-group" onclick="event.stopPropagation()">
                 <label class="pill-radio">
                     <input type="radio" name="sortOrder" value="alpha" checked onchange="updatePlacesList()">
-                    <span class="pill-label">A-Z</span>
+                    <span class="pill-label" data-i18n="sortAZ">A-Z</span>
                 </label>
                 <label class="pill-radio">
                     <input type="radio" name="sortOrder" value="distance" id="sortDistanceBtn" disabled onchange="updatePlacesList()">
-                    <span class="pill-label">Nearest</span>
+                    <span class="pill-label" data-i18n="sortNearest">Nearest</span>
                 </label>
             </div>
         </div>
@@ -144,18 +161,18 @@
 
     <div id="addPlaceModal" class="modal-overlay">
         <div class="modal-content">
-            <h2>Add New Place</h2>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 15px;">Submit a place for admin review.</p>
+            <h2 data-i18n="addPlaceTitle">Add New Place</h2>
+            <p data-i18n="addPlaceSubtitle" style="font-size: 13px; color: #6b7280; margin-bottom: 15px;">Submit a place for admin review.</p>
 
             <div class="form-grid">
                 <div class="form-group full-width">
-                    <label for="placeTitle">Place Name (English) *Primary</label>
+                    <label for="placeTitle" data-i18n="modalPrimaryName">Place Name (English) *Primary</label>
                     <input type="text" id="placeTitle" class="form-control" placeholder="e.g. Science Building WC" required>
                 </div>
 
                 <div class="form-group full-width" style="margin-bottom: 5px;">
                     <details>
-                        <summary>🌍 Add Translations</summary>
+                        <summary data-i18n="modalTranslations">🌍 Add Translations</summary>
                         <div class="lang-inputs">
                             <input type="text" id="placeTitleTh" class="form-control" placeholder="Name (Thai)">
                             <input type="text" id="placeTitleCn" class="form-control" placeholder="Name (Chinese)">
@@ -165,43 +182,58 @@
                 </div>
 
                 <div class="form-group full-width">
-                    <label>Operating Hours</label>
-                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 8px;">
-                        <label class="checkbox-container" style="margin-bottom:0;">
-                            <input type="checkbox" id="is24hCheckbox">
-                            <span>Open 24 Hours</span>
+                    <label data-i18n="modalOpHours">Operating Hours</label>
+                    <div class="dual-toggle-container">
+                        <span id="labelSpecific" class="dual-toggle-label active" data-i18n="filterSpecific">Specific Hours</span>
+                        <label style="margin: 0; cursor: pointer; display: flex;">
+                            <div class="toggle-wrapper">
+                                <input type="checkbox" id="is24hCheckbox" class="sr-only">
+                                <div class="toggle-track"></div>
+                                <div class="toggle-dot"></div>
+                            </div>
                         </label>
+                        <span id="label24h" class="dual-toggle-label" data-i18n="filter24h">24 Hours</span>
                     </div>
-                    <div class="time-range-row" id="timeInputGroup">
+                    
+                    <div class="time-range-row" id="timeInputGroup" style="transition: opacity 0.3s;">
                         <input type="time" id="placeTimeFrom" class="time-picker">
-                        <span style="color: #6b7280; font-weight: bold; font-size: 13px;">to</span>
+                        <span style="color: #6b7280; font-weight: bold; font-size: 13px;">-</span>
                         <input type="time" id="placeTimeTo" class="time-picker">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="placeAccess">Access</label>
-                    <select id="placeAccess" class="form-control">
-                        <option value="all">All (Staff & Students)</option>
-                        <option value="student">Students only</option>
-                        <option value="staff">Staff only</option>
-                    </select>
+                    <label data-i18n="modalAccess">Access</label>
+                    <div class="pill-group" style="flex-wrap: wrap;">
+                        <label class="pill-radio">
+                            <input type="radio" name="submitAccess" value="all" checked>
+                            <span class="pill-label" data-i18n="filterAll">All</span>
+                        </label>
+                        <label class="pill-radio">
+                            <input type="radio" name="submitAccess" value="student">
+                            <span class="pill-label" data-i18n="filterStudents">Students</span>
+                        </label>
+                        <label class="pill-radio">
+                            <input type="radio" name="submitAccess" value="staff">
+                            <span class="pill-label" data-i18n="filterStaff">Staff</span>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="placeNote">Note (Optional)</label>
+                    <label for="placeNote" data-i18n="modalNote">Note (Optional)</label>
                     <input type="text" id="placeNote" class="form-control" placeholder="e.g. Male WC only">
                 </div>
 
                 <div class="form-group full-width">
-                    <label>Attachments & Location</label>
+                    <label data-i18n="modalLocation">Attachments & Location</label>
                     <div class="image-row">
                         <div class="image-section" id="placeImageSection">
                             <input type="file" id="placeImage" accept="image/*" />
                             <span class="clear-btn" title="Clear image">×</span>
                         </div>
                         <div class="location-section" id="placeLocationSection">
-                            <button type="button" id="pickLocationBtn">📍 Pick Map Location</button>
+                            <button type="button" id="pickLocationBtn" data-i18n="pickLocation">📍 Pick Map Location</button>
                         </div>
                     </div>
                     <p id="selectedCoordsText" style="font-size: 12px; color: #059669; margin-top: 6px; display: none;">✅ Location pinned!</p>
@@ -209,17 +241,17 @@
             </div>
 
             <div class="modal-actions">
-                <button type="button" id="cancelModalBtn" class="btn-text">Cancel</button>
-                <button type="button" id="submitPlaceBtn" class="btn-primary">Submit Place</button>
+                <button type="button" id="cancelModalBtn" class="btn-text" data-i18n="btnCancel">Cancel</button>
+                <button type="button" id="submitPlaceBtn" class="btn-primary" data-i18n="btnSubmit">Submit Place</button>
             </div>
         </div>
     </div>
 
     <div id="mapConfirmUI" class="map-confirm-ui">
-        <p>Drag the map to the exact location.</p>
+        <p data-i18n="mapConfirmText">Drag the map to the exact location.</p>
         <div style="display: flex; gap: 10px; align-items: center; justify-content: center;">
-            <button id="cancelMarkerBtn" class="btn-text" style="background: transparent; margin: 0;">Cancel</button>
-            <button id="confirmMarkerBtn" class="btn-primary" style="margin: 0;">Confirm</button>
+            <button id="cancelMarkerBtn" class="btn-text" style="background: transparent; margin: 0;" data-i18n="btnCancel">Cancel</button>
+            <button id="confirmMarkerBtn" class="btn-primary" style="margin: 0;" data-i18n="btnConfirm">Confirm</button>
         </div>
     </div>
 
@@ -228,5 +260,4 @@
     <script src="script.js"></script>
     <script src="utils.js"></script>
 </body>
-
 </html>
