@@ -6,6 +6,6 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "cd Backend && npm install --omit=dev && npm run start"
+    "start": "cd Backend && npm install --legacy-peer-deps --omit=dev && npm run start"
   }
 }
