@@ -180,10 +180,12 @@ async function fetchMarkerData(lang = "en") {
         const isPending = place.isPending;
         const pendingHTML = isPending ? `<p style="margin: 6px 0 0 0; font-size: 13px; color: #eab308; font-weight: bold;">⚠️ Pending Admin Review</p>` : "";
 
-        const DEFAULT_IMG = "/place_data_asset/Default_img.png";
+        // 🌟 NEW: Use Cloudinary URL, fallback to your existing Silpakorn logo if no image exists
+        const DEFAULT_IMG = "./assets/silpakorn-icon.png"; 
         let cleanImgPath = DEFAULT_IMG;
-        if (place.img && place.img.startsWith("/place_data_asset/")) {
-          cleanImgPath = place.img;
+        
+        if (place.img && place.img.startsWith("http")) {
+            cleanImgPath = place.img;
         }
 
         const imgHTML = `<img src="${cleanImgPath}" alt="Restroom Image" onerror="this.src='${DEFAULT_IMG}'; this.style.backgroundColor='#e5e7eb';" class="animated-popup-img">`;
