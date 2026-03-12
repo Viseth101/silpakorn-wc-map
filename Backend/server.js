@@ -4,14 +4,15 @@ const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const fs = require("fs").promises;
-const fsSync = require("fs"); 
+const fsSync = require("fs");          // synchronous filesystem calls when needed
 const path = require("path");
-const helmet = require("helmet");
-
 const app = express();
+const helmet = require("helmet");
 
 // === rate limiting ===
 const rateLimit = require("express-rate-limit");
+
+// Limit submissions from the same IP to 5 requests per 15 minutes
 const submitLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, 
     max: 5, 
@@ -61,8 +62,8 @@ const upload = multer({
 // === middleware ===
 app.use(cors());
 app.use(helmet({
-    contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
 }));
 app.use(express.json());
 // serve the separate frontend directory (one level up)
@@ -71,28 +72,24 @@ app.use("/place_data_asset", express.static(ASSET_DIR));
 
 // === utility helpers ===
 const CAMPUS_BOUNDS = { south: 13.812, north: 13.825, west: 100.034, east: 100.047 };
-
 function isWithinCampus(lat, lng) {
-    return (lat >= CAMPUS_BOUNDS.south && lat <= CAMPUS_BOUNDS.north && lng >= CAMPUS_BOUNDS.west && lng <= CAMPUS_BOUNDS.east);
+  return (lat >= CAMPUS_BOUNDS.south && lat <= CAMPUS_BOUNDS.north && lng >= CAMPUS_BOUNDS.west && lng <= CAMPUS_BOUNDS.east);
 }
 
+
 function sanitizeInput(str) {
-    if (!str || typeof str !== 'string') {
-        if (typeof str === 'number') return str.toString();
-        return ""; // Failsafe: if it's an object or undefined, return empty string instead of crashing
-    }
+    if (!str) return "";
     return str.replace(/[&<>'"]/g, (tag) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"})[tag]);
 }
 
 async function readJSON(filePath) {
     try {
         const content = await fs.readFile(filePath, "utf-8");
-        if (!content || content.trim() === "") return []; 
         return JSON.parse(content);
     } catch (e) {
-        if (e.code === 'ENOENT') return []; 
-        console.error(`\n🚨 ERROR reading ${filePath}. Returning empty array to prevent crash.`, e);
-        return []; 
+        if (e.code === 'ENOENT') return []; // missing file -> treat as empty
+        console.error(`\n🚨 CRITICAL ERROR: Could not parse JSON. Preventing data wipe!\n`, e);
+        throw e; 
     }
 }
 
@@ -123,31 +120,22 @@ function checkAccessRole(accessText) {
     return "all";
 }
 
+// generate next numeric ID by looking at both approved & pending lists
 async function getNextId() {
-    const approved = await readJSON(path.join(DATA_DIR, "place_data.json"));
-    const pending = await readJSON(path.join(DATA_DIR, "pending_places.json"));
+    const approved = await readJSON(path.join(__dirname, "Database", "place_data.json"));
+    const pending = await readJSON(path.join(__dirname, "Database", "pending_places.json"));
     const allIds = [...approved.map(p => p.id || 0), ...pending.map(p => p.id || 0)];
     return allIds.length > 0 ? Math.max(...allIds) + 1 : 1;
 }
 
-// === Endpoints ===
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-
-app.get("/api/config", (req, res) => { 
-    res.json({ mapsApiKey: process.env.GOOGLE_API_KEY }); 
-});
-
-app.post("/api/admin-login", (req, res) => {
-    if (req.body.password === ADMIN_PASSWORD) res.json({ success: true });
-    else res.status(401).json({ success: false, error: "Incorrect password" });
-});
+app.get("/api/config", (req, res) => { res.json({ mapsApiKey: process.env.GOOGLE_API_KEY }); });
 
 app.get("/wc", async (req, res) => {
     try {
         const lang = req.query.lang || "en";
         const safeLang = ALL_LANGS.includes(lang) ? lang : "en";
 
-        const dataPath = path.join(DATA_DIR, "place_data.json");
+        const dataPath = path.join(__dirname, "Database", "place_data.json");
         const allPlaces = await readJSON(dataPath);
 
         const approvedPlaces = allPlaces.map((place) => {
@@ -161,7 +149,7 @@ app.get("/wc", async (req, res) => {
             };
         });
 
-        const pendingPath = path.join(DATA_DIR, "pending_places.json");
+        const pendingPath = path.join(__dirname, "Database", "pending_places.json");
         const pendingData = await readJSON(pendingPath);
 
         const formattedPending = pendingData.map((p) => {
@@ -182,17 +170,72 @@ app.get("/wc", async (req, res) => {
     }
 });
 
-app.get("/api/pending", async (req, res) => {
-    try { 
-        res.json(await readJSON(path.join(DATA_DIR, "pending_places.json"))); 
-    } catch (err) { 
-        res.status(500).json({ error: "Failed to fetch pending places." }); 
+app.post("/api/submit-place", submitLimiter, upload.single('image'), async (req, res) => {
+    try {
+        const openTime = sanitizeInput(req.body.openTime);
+        const access = sanitizeInput(req.body.access) || "ALL (Staff & Students)";
+        const note = sanitizeInput(req.body.note) || "";
+        let { lat, lng } = req.body;
+
+        lat = parseFloat(lat); lng = parseFloat(lng);
+
+        if (isNaN(lat) || isNaN(lng)) return res.status(400).json({ error: "Invalid coordinates" });
+        if (!isWithinCampus(lat, lng)) return res.status(400).json({ error: "Location must be within campus bounds" });
+
+        // parse the names payload which may come as a JSON string or absent
+        const namesObj = req.body.names ? JSON.parse(req.body.names) : { en: req.body.title || "Unnamed" };
+        const safeEn = sanitizeInput(namesObj.en);
+        
+        // Setup the building multi-language object using English as fallback
+        const building = { 
+            en: safeEn, 
+            th: sanitizeInput(namesObj.th) || safeEn, 
+            cn: sanitizeInput(namesObj.cn) || safeEn, 
+            kh: sanitizeInput(namesObj.kh) || safeEn 
+        };
+
+        const accessType = checkAccessRole(access);
+        let imgPath = req.file ? "/place_data_asset/" + req.file.filename : "";
+
+        const pendingPath = path.join(__dirname, "Database", "pending_places.json");
+        let pendingPlaces = await readJSON(pendingPath);
+
+        const nextId = await getNextId(); 
+
+        pendingPlaces.push({
+            id: nextId,
+            building,
+            operatingHours: openTime,
+            accessType,
+            note,
+            img: imgPath,
+            isPending: true,
+            lat,
+            lng
+        });
+
+        await writeJSON(pendingPath, pendingPlaces);
+        res.status(200).json({ message: "Place saved and marked as pending!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Failed to submit place" });
     }
+});
+
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+app.post("/api/admin-login", (req, res) => {
+    if (req.body.password === ADMIN_PASSWORD) res.json({ success: true });
+    else res.status(401).json({ success: false, error: "Incorrect password" });
+});
+
+app.get("/api/pending", async (req, res) => {
+    try { res.json(await readJSON(path.join(__dirname, "Database", "pending_places.json"))); } 
+    catch (err) { res.status(500).json({ error: "Failed to fetch pending places." }); }
 });
 
 app.get("/api/all-places", async (req, res) => {
     try {
-        const dataPath = path.join(DATA_DIR, "place_data.json");
+        const dataPath = path.join(__dirname, "Database", "place_data.json");
         const allPlaces = await readJSON(dataPath);
 
         const merged = allPlaces.map((place) => {
@@ -211,83 +254,29 @@ app.get("/api/all-places", async (req, res) => {
     }
 });
 
-app.post("/api/submit-place", submitLimiter, upload.single('image'), async (req, res) => {
-    try {
-        const openTime = sanitizeInput(req.body.openTime);
-        const access = sanitizeInput(req.body.access) || "ALL (Staff & Students)";
-        const note = sanitizeInput(req.body.note) || "";
-        let { lat, lng } = req.body;
-
-        lat = parseFloat(lat); lng = parseFloat(lng);
-
-        if (isNaN(lat) || isNaN(lng)) return res.status(400).json({ error: "Invalid coordinates" });
-        if (!isWithinCampus(lat, lng)) return res.status(400).json({ error: "Location must be within campus bounds" });
-
-        // parse the names payload which may come as a JSON string or absent
-        const namesObj = req.body.names ? JSON.parse(req.body.names) : { en: req.body.title || "Unnamed" };
-        const safeEn = sanitizeInput(namesObj.en);
-        
-        const building = { 
-            en: safeEn, 
-            th: sanitizeInput(namesObj.th) || safeEn, 
-            cn: sanitizeInput(namesObj.cn) || safeEn, 
-            kh: sanitizeInput(namesObj.kh) || safeEn 
-        };
-
-        const accessType = checkAccessRole(access);
-        let imgPath = req.file ? "/place_data_asset/" + req.file.filename : "";
-
-        const pendingPath = path.join(DATA_DIR, "pending_places.json");
-        let pendingPlaces = await readJSON(pendingPath);
-        const nextId = await getNextId(); 
-
-        pendingPlaces.push({
-            id: nextId, building, operatingHours: openTime, accessType, note, img: imgPath, isPending: true, lat, lng
-        });
-
-        await writeJSON(pendingPath, pendingPlaces);
-        res.status(200).json({ message: "Place saved and marked as pending!" });
-    } catch (err) {
-        res.status(500).json({ error: err.message || "Failed to submit place" });
-    }
-});
-
 app.post("/api/approve", async (req, res) => {
     if (req.body.password !== ADMIN_PASSWORD) return res.status(401).json({ error: "Unauthorized" });
     try {
         const { id } = req.body;
-        const pendingPath = path.join(DATA_DIR, "pending_places.json"); 
+        const pendingPath = path.join(__dirname, "Database", "pending_places.json");
         let pending = await readJSON(pendingPath);
         const placeToApprove = pending.find((p) => p.id === id);
 
         if (placeToApprove) {
-            const dataPath = path.join(DATA_DIR, "place_data.json");
+            const dataPath = path.join(__dirname, "Database", "place_data.json");
             let places = await readJSON(dataPath);
 
-            // BULLETPROOF NAME EXTRACTION: Handles both new Objects and legacy Strings perfectly
-            let finalNames = { en: "Unnamed WC", th: "Unnamed WC", cn: "Unnamed WC", kh: "Unnamed WC" };
-            if (placeToApprove.building && typeof placeToApprove.building === 'object') {
-                finalNames = { ...finalNames, ...placeToApprove.building };
-            } else if (placeToApprove.names && typeof placeToApprove.names === 'object') {
-                finalNames = { ...finalNames, ...placeToApprove.names };
-            } else if (typeof placeToApprove.building === 'string') {
-                finalNames = { en: placeToApprove.building, th: placeToApprove.building, cn: placeToApprove.building, kh: placeToApprove.building };
-            }
+            const names = placeToApprove.names || {
+                en: placeToApprove.building || "Unnamed WC", th: placeToApprove.building || "Unnamed WC",
+                cn: placeToApprove.building || "Unnamed WC", kh: placeToApprove.building || "Unnamed WC",
+            };
 
             const newPlace = {
-                id: placeToApprove.id, 
-                lat: parseFloat(placeToApprove.lat), 
-                lng: parseFloat(placeToApprove.lng),
+                id: placeToApprove.id, lat: parseFloat(placeToApprove.lat), lng: parseFloat(placeToApprove.lng),
                 ...(placeToApprove.img && !placeToApprove.img.toLowerCase().includes("default") && { img: placeToApprove.img }),
-                building: { 
-                    en: sanitizeInput(finalNames.en), 
-                    cn: sanitizeInput(finalNames.cn), 
-                    kh: sanitizeInput(finalNames.kh), 
-                    th: sanitizeInput(finalNames.th) 
-                },
-                operatingHours: sanitizeInput(placeToApprove.operatingHours || ""), 
-                notes: sanitizeInput(placeToApprove.note || placeToApprove.notes || ""),
-                accessType: checkAccessRole(sanitizeInput(placeToApprove.access || placeToApprove.accessType || "")),
+                building: { en: sanitizeInput(names.en), cn: sanitizeInput(names.cn), kh: sanitizeInput(names.kh), th: sanitizeInput(names.th) },
+                operatingHours: sanitizeInput(placeToApprove.operatingHours || ""), notes: sanitizeInput(placeToApprove.note || ""),
+                accessType: checkAccessRole(sanitizeInput(placeToApprove.access || "")),
             };
 
             places.push(newPlace);
@@ -300,50 +289,34 @@ app.post("/api/approve", async (req, res) => {
         } else {
             res.status(404).json({ error: "Pending place not found." });
         }
-    } catch (err) { 
-        console.error("Approve error:", err);
-        res.status(500).json({ error: "Server error during approval." }); 
-    }
+    } catch (err) { res.status(500).json({ error: "Server error during approval." }); }
 });
 
 app.post("/api/reject", async (req, res) => {
     if (req.body.password !== ADMIN_PASSWORD) return res.status(401).json({ error: "Unauthorized" });
     try {
         const { id } = req.body;
-        const pendingPath = path.join(DATA_DIR, "pending_places.json");
-        const approvedPath = path.join(DATA_DIR, "place_data.json");
-        
+        const pendingPath = path.join(__dirname, "Database", "pending_places.json");
         let pending = await readJSON(pendingPath);
-        let approved = await readJSON(approvedPath);
         
-        let placeToDelete = pending.find((p) => p.id === id);
-        let isPending = true;
+        // Find the item before deleting it to get the image path
+        const placeToReject = pending.find((p) => p.id === id);
+        
+        // Remove from array and save
+        pending = pending.filter((p) => p.id !== id);
+        await writeJSON(pendingPath, pending);
 
-        if (!placeToDelete) {
-            placeToDelete = approved.find((p) => p.id === id);
-            isPending = false;
-        }
-
-        if (!placeToDelete) return res.status(404).json({ error: "Place not found in database." });
-
-        if (isPending) {
-            pending = pending.filter((p) => p.id !== id);
-            await writeJSON(pendingPath, pending);
-        } else {
-            approved = approved.filter((p) => p.id !== id);
-            await writeJSON(approvedPath, approved);
-        }
-
-        if (placeToDelete.img) {
-            const fileName = path.basename(placeToDelete.img);
+        // CLEANUP: Delete the orphaned image file from the server
+        if (placeToReject && placeToReject.img) {
+            const fileName = path.basename(placeToReject.img);
             if (fileName && fileName !== "Default_img.png") {
                 const imgPath = path.join(ASSET_DIR, fileName);
-                fs.unlink(imgPath).catch(err => console.error("Failed to delete image:", err));
+                fs.unlink(imgPath).catch(err => console.error("Failed to delete rejected image:", err));
             }
         }
 
-        res.status(200).json({ message: "Place successfully deleted from database." });
-    } catch (err) { res.status(500).json({ error: "Server error during deletion." }); }
+        res.status(200).json({ message: "Rejection removed from pending and image deleted." });
+    } catch (err) { res.status(500).json({ error: "Server error during rejection." }); }
 });
 
 app.post("/api/edit-place", upload.single('image'), async (req, res) => {
@@ -354,7 +327,7 @@ app.post("/api/edit-place", upload.single('image'), async (req, res) => {
         const safeEn = sanitizeInput(namesObj.en);
         const finalNames = { en: safeEn, cn: sanitizeInput(namesObj.cn) || safeEn, kh: sanitizeInput(namesObj.kh) || safeEn, th: sanitizeInput(namesObj.th) || safeEn };
 
-        const dataPath = path.join(DATA_DIR, "place_data.json");
+        const dataPath = path.join(__dirname, "Database", "place_data.json");
         let places = await readJSON(dataPath);
         const index = places.findIndex((p) => p.id === parseInt(id));
 
@@ -366,7 +339,9 @@ app.post("/api/edit-place", upload.single('image'), async (req, res) => {
             if (lat !== undefined) places[index].lat = parseFloat(lat);
             if (lng !== undefined) places[index].lng = parseFloat(lng);
             
+            // Handle new image upload
             if (req.file) {
+                // CLEANUP: Delete old image if it gets replaced
                 if (places[index].img) {
                     const oldFileName = path.basename(places[index].img);
                     if (oldFileName && oldFileName !== "Default_img.png") {
@@ -378,7 +353,8 @@ app.post("/api/edit-place", upload.single('image'), async (req, res) => {
             await writeJSON(dataPath, places);
         }
 
-        const pendingPath = path.join(DATA_DIR, "pending_places.json");
+        // Apply identical logic to pending file if editing an unapproved place
+        const pendingPath = path.join(__dirname, "Database", "pending_places.json");
         let pending = await readJSON(pendingPath);
         const pIndex = pending.findIndex((p) => p.id === parseInt(id));
         if (pIndex !== -1) {
@@ -390,6 +366,7 @@ app.post("/api/edit-place", upload.single('image'), async (req, res) => {
             if (lng !== undefined) pending[pIndex].lng = parseFloat(lng);
             
             if (req.file) {
+                // CLEANUP: Delete old image
                 if (pending[pIndex].img) {
                     const oldFileName = path.basename(pending[pIndex].img);
                     if (oldFileName && oldFileName !== "Default_img.png") {
@@ -415,9 +392,9 @@ app.post("/api/admin-add-place", upload.single('image'), async (req, res) => {
 
         let imgPath = req.file ? "/place_data_asset/" + req.file.filename : "";
 
-        const dataPath = path.join(DATA_DIR, "place_data.json");
+        const dataPath = path.join(__dirname, "Database", "place_data.json");
         let places = await readJSON(dataPath);
-        const nextId = await getNextId();
+        const nextId = await getNextId(); // Safe ID generation
 
         places.push({
             id: nextId, lat: parseFloat(lat), lng: parseFloat(lng), building: finalNames,

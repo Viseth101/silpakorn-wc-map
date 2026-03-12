@@ -1,4 +1,4 @@
-# <img src="Frontend/assets/silpakorn-icon.png" alt="Silpakorn Logo" width="45" height="45" align="top"> Silpakorn University Bathroom Map
+# 🚽 Silpakorn WC Map
 
 ![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white)
 ![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white)
@@ -14,43 +14,36 @@ A full-stack, interactive web mapping application designed to help the Silpakorn
 ## ✨ Key Features
 
 * **🌍 Multilingual UI:** Seamlessly switch between English, Thai, Chinese, and Khmer. Features a dynamic typography engine that applies the professional 'Battambang' Google Font specifically for Khmer rendering.
-* **📍 Live Tracking & Smart Directory:** A collapsible side-panel (desktop) and swipe-up bottom sheet (mobile) that displays all available restrooms. Utilizes `navigator.geolocation.watchPosition()` to track users in real-time, actively updating UI distances and allowing dynamic sorting by "Nearest" (via Haversine formula) as they walk.
-* **🗺️ Interactive Custom Map:** Integrates the Google Maps JavaScript API with custom restricted bounds (locked to the university campus), custom SVG marker pins, and dark/satellite mode toggles.
-* **🔍 Live Filtering & Search:** Users can filter locations dynamically based on specific criteria:
+* **🗺️ Interactive Custom Map:** Integrates the Google Maps JavaScript API with custom restricted bounds (locked to the university campus), custom marker pins, and dark/satellite mode toggles.
+* **🔍 Smart Filtering:** Users can filter locations dynamically based on specific criteria:
   * Access levels: *All (Staff & Students), Students Only, or Staff Only*.
-  * Operating hours: *Open 24 hours or open within a specific user-defined time range*.
+  * Operating hours: *Open 24 hours or open within a specific time range*.
 * **📸 Secure File Uploads:** Users can submit new locations with images. The backend uses `multer` to handle image uploads with strict MIME-type checking and a 5MB file size limit.
-* **🛡️ Secure Admin Dashboard:** A password-protected interface allowing administrators to review, edit, approve, or reject user-submitted places directly on a live map view.
-* **💾 Robust JSON Database Architecture:** Utilizes an atomic-write JSON file system (`place_data.json` & `pending_places.json`) to prevent data corruption and race conditions during simultaneous read/writes.
-
----
+* **🛡️ Secure Admin Dashboard:** A password-protected interface allowing administrators to review, edit, approve, or reject user-submitted places. 
+* **💾 Robust JSON Database Architecture:** Utilizes an atomic-write JSON file system (`place_data.json` & `pending_places.json`) as a Single Source of Truth, preventing data corruption and out-of-sync coordinates across language configurations.
 
 ## 📂 Project Structure
 
 The project is cleanly separated into Frontend and Backend directories:
 
-```text
-Silpakorn-WC-Map/
-├── Backend/
-│   ├── Database/
-│   │   ├── place_data.json         # Approved production database
-│   │   └── pending_places.json     # User submissions awaiting review
-│   ├── place_data_asset/           # Directory for user-uploaded images
-│   ├── package.json                # Backend dependencies
-│   ├── server.js                   # Express server, API routes, and DB logic
-│   └── .env                        # Environment variables (Ignored by Git)
-├── Frontend/
-│   ├── index.html                  # Main client-side map UI
-│   ├── admin.html                  # Admin Dashboard UI
-│   ├── styles.css                  # Global stylesheets & responsive media queries
-│   ├── script.js                   # Client-side map initialization and filtering
-│   ├── utils.js                    # Shared logic (Role checking, distance calculations)
-│   ├── languages.json              # Multilingual dictionary
-│   └── assets/                     # Static UI assets (icons, logos)
-└── .gitignore
-```
-
----
+    Silpakorn-WC-Map/
+    ├── Backend/
+    │   ├── Database/
+    │   │   ├── place_data.json         # Approved production database
+    │   │   └── pending_places.json     # User submissions awaiting review
+    │   ├── place_data_asset/           # Directory for user-uploaded images
+    │   ├── package.json                # Backend dependencies
+    │   ├── server.js                   # Express server, API routes, and DB logic
+    │   └── .env                        # Environment variables (Ignored by Git)
+    ├── Frontend/
+    │   ├── index.html                  # Main client-side map UI
+    │   ├── admin.html                  # Admin Dashboard UI
+    │   ├── styles.css                  # Global stylesheets & responsive media queries
+    │   ├── script.js                   # Client-side map initialization and filtering
+    │   ├── utils.js                    # Shared logic (Role checking, color assignments)
+    │   ├── languages.json              # Multilingual dictionary
+    │   └── assets/                     # Static UI assets (icons, logos)
+    └── .gitignore
 
 ## 🚀 Installation & Setup
 
@@ -84,10 +77,7 @@ To run this project locally, you will need **Node.js** installed on your machine
 
 * **DRY Principles:** Shared business logic (such as identifying access roles across four languages and calculating marker colors) is extracted into `utils.js` to ensure the Client Map and Admin Dashboard behave identically.
 * **Memory Leak Prevention:** The backend file system module (`fs.unlink`) actively deletes orphaned image files from the server whenever an admin rejects a pending place or replaces an image.
-* **Failsafe Parsing:** The `readJSON` helper includes robust error catching. If a database file is accidentally corrupted or emptied, it returns a blank array instead of crashing the Node server, preventing widespread outages.
-* **Responsive State Management:** The frontend utilizes advanced CSS transitions, `max-height` calculations, and Javascript mutual exclusion logic to ensure floating action buttons (FABs), legend controls, and bottom-sheet drawers never overlap on mobile devices.
-
----
+* **Auto-Increment ID Generation:** IDs are dynamically generated by checking both the approved and pending JSON arrays, preventing database collisions even when items are deleted.
 
 ## 👨‍💻 Author
 

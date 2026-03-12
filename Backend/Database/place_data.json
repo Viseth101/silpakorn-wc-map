@@ -754,9 +754,28 @@
     "notes": {
       "en": "Ask the security guard permission from the security guard before entering",
       "cn": "进入前须向保安人员申请许可",
-      "kh": "ត្រូវស្នើសុំការអនុញ្ញាតពីសន្តិសុខមុនពេលចូល",
+      "kh": "ត្រូវស្នើសុំការអនុញ្ញាតពីអ្នកយាមសន្តិសុខមុនពេលចូល",
       "th": "ขออนุญาตจากเจ้าหน้าที่รักษาความปลอดภัยก่อนเข้าใช้"
     },
     "accessType": "staff"
+  },
+  {
+    "id": 39,
+    "lat": 13.814758970379195,
+    "lng": 100.03967411356626,
+    "building": {
+      "en": "S Test",
+      "cn": "S Test",
+      "kh": "S Test",
+      "th": "Thai S Test"
+    },
+    "operatingHours": "24 Hours",
+    "notes": {
+      "en": "",
+      "cn": "",
+      "kh": "",
+      "th": ""
+    },
+    "accessType": "all"
   }
 ]
