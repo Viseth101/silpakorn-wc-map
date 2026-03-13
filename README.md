@@ -1,4 +1,4 @@
-# <img src="Frontend/assets/silpakorn-icon.png" alt="Silpakorn Logo" width="45" height="45" align="top"> Silpakorn University Bathroom Map
+# <img src="Frontend/assets/silpakorn-icon.png" alt="Silpakorn Logo" width="45" height="45" align="top"> Silpakorn University Sanam Chan Bathroom Map
 
 ![MySQL](https://img.shields.io/badge/mysql-%2300f.svg?style=for-the-badge&logo=mysql&logoColor=white)
 ![Cloudinary](https://img.shields.io/badge/Cloudinary-3448C5?style=for-the-badge&logo=Cloudinary&logoColor=white)
@@ -20,6 +20,7 @@ A full-stack, production-ready mapping application designed to help the Silpakor
 * **📸 Stateless Cloud Storage:** User-submitted images are automatically processed, optimized via `sharp`, and stored on **Cloudinary**, ensuring permanent availability.
 * **🛡️ Secure Admin Dashboard:** A password-protected interface allowing administrators to review, edit, approve, or reject user-submitted places directly on a live map view.
 * **💎 Glassmorphism Design:** A modern UI inspired by iOS/iPadOS, featuring high-blur vibrancy, deep saturation, and 0.45 opacity for maximum readability over map layers.
+* **🔒 Security:** Uses `helmet` to secure the app by setting various HTTP headers and `express-rate-limit` to prevent brute-force attacks.
 
 ---
 
@@ -42,8 +43,6 @@ The project is cleanly separated into Frontend and Backend directories:
 Silpakorn-WC-Map/
 ├── Backend/
 │   ├── server.js                # Express server with MySQL Pool & Cloudinary logic
-│   ├── migrate.js               # Data migration script (JSON to SQL)
-│   ├── upload_images.js         # Automated image pipeline to Cloudinary
 │   └── .env                     # Environment variables (Ignored by Git)
 ├── Frontend/
 │   ├── index.html               # Main client-side map UI
@@ -63,14 +62,16 @@ To run this project, you will need **Node.js** installed and a **Google Maps API
 
 ### 1. Clone the repository
 ```bash
-git clone [https://github.com/yourusername/Silpakorn-WC-Map.git](https://github.com/yourusername/Silpakorn-WC-Map.git)
+git clone https://github.com/yourusername/Silpakorn-WC-Map.git
 cd Silpakorn-WC-Map
 ```
 
-### 2. Install backend dependencies
-Because of specific peer-dependency requirements for the Cloudinary engine, use the legacy flag:
+### 2. Install dependencies
 ```bash
-cd Backend
+npm install
+```
+If you encounter peer dependency issues, you can try:
+```bash
 npm install --legacy-peer-deps
 ```
 
@@ -86,15 +87,12 @@ ADMIN_PASSWORD=your_secure_admin_password
 
 ### 4. Start the server
 ```bash
-# Development mode
-npm run dev
-
-# Production mode
+# This will install backend dependencies and start the server
 npm start
 ```
 
 ### 5. View the app
-Open your browser and navigate to `http://localhost:3000`. 
+Open your browser and navigate to `http://localhost:3000`.
 To access the admin panel, navigate to `http://localhost:3000/admin.html`.
 
 ---

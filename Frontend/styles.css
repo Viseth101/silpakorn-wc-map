@@ -41,7 +41,14 @@ body.lang-kh .modal-content *, body.lang-kh .filter-popup *, body.lang-kh .anima
 
 .top-left-logo { top: 20px; left: 20px; padding: 10px 16px; display: flex; align-items: center; gap: 10px; border-radius: 999px; }
 .top-left-logo img { width: 30px; height: 30px; object-fit: contain; }
-.top-left-logo strong { font-size: 1.2rem; white-space: nowrap; }
+.top-left-logo strong { font-size: 1.2rem; }
+
+.short-title {
+    display: none;
+}
+.long-title {
+    display: inline;
+}
 
 .top-right-search { top: 20px; right: 20px; padding: 8px; display: flex; align-items: center; border-radius: 999px; }
 .top-right-search input { padding: 8px 40px 8px 34px; border-radius: 999px; border: 1px solid rgba(209, 213, 219, 0.5); outline: none; width: 240px; font-size: 13px; background: transparent; }
@@ -327,6 +334,13 @@ body.dark-theme .dual-toggle-label.active { color: #60a5fa; }
         transform: translateY(calc(-60dvh + 45px)); 
     }
     
+    .short-title {
+        display: inline;
+    }
+    .long-title {
+        display: none;
+    }
+
     .form-grid { grid-template-columns: 1fr; }
     .form-grid .full-width { grid-column: span 1; }
 }
