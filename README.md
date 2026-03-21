@@ -66,9 +66,16 @@ git clone https://github.com/yourusername/Silpakorn-WC-Map.git
 cd Silpakorn-WC-Map
 ```
 
-### 2. Install dependencies
+### 2. Install backend dependencies
+The root `package.json` includes a convenient `start` script that installs backend dependencies and starts the server in one command.
+
+```bash
+npm start
+```
+Alternatively, for development with live-reloading (`nodemon`):
 ```bash
 npm install
+npm run dev
 ```
 If you encounter peer dependency issues, you can try:
 ```bash
@@ -85,23 +92,36 @@ CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
 ADMIN_PASSWORD=your_secure_admin_password
 ```
 
-### 4. Start the server
-```bash
-# This will install backend dependencies and start the server
-npm start
-```
-
-### 5. View the app
-Open your browser and navigate to `http://localhost:3000`.
+### 4. View the app
+Open your browser and navigate to `http://localhost:3000`. 
 To access the admin panel, navigate to `http://localhost:3000/admin.html`.
 
 ---
 
-## ⚙️ Technical Highlights
+## ⚙️ API Endpoints
 
-* **Atomic Transactions:** Uses MySQL transactions (`beginTransaction`, `commit`, `rollback`) to ensure that restrooms and their translations are either saved perfectly together or not at all.
-* **Memory Management:** The system is entirely stateless; no images or data points are stored on the local disk, making it 100% compatible with modern containerized environments.
-* **DRY Principles:** Shared business logic (access role checks and distance calculations) is extracted into `utils.js` to ensure the Client Map and Admin Dashboard behave identically.
+The backend provides the following REST API endpoints:
+
+*   `GET /api/config`: Returns the Google Maps API key.
+*   `POST /api/admin-login`: Authenticates an admin user.
+*   `GET /wc?lang=<lang>`: Returns a list of approved and pending restrooms in the specified language.
+*   `GET /api/pending`: Returns a list of all pending restrooms.
+*   `GET /api/all-places`: Returns a list of all approved restrooms.
+*   `POST /api/submit-place`: Submits a new restroom for admin review.
+*   `POST /api/approve`: Approves a pending restroom.
+*   `POST /api/reject`: Rejects a pending restroom or deletes an approved one.
+*   `POST /api/edit-place`: Edits an existing restroom.
+*   `POST /api/admin-add-place`: Allows an admin to add a new restroom directly.
+
+---
+
+## ⚙️ Technical Highlights (For Developers)
+
+* **DRY Principles:** Shared business logic (such as identifying access roles across four languages and calculating marker colors) is extracted into `utils.js` to ensure the Client Map and Admin Dashboard behave identically.
+* **Memory Leak Prevention:** The backend file system module (`fs.unlink`) actively deletes orphaned image files from the server whenever an admin rejects a pending place or replaces an image.
+* **Failsafe Parsing:** The `readJSON` helper includes robust error catching. If a database file is accidentally corrupted or emptied, it returns a blank array instead of crashing the Node server, preventing widespread outages.
+* **Responsive State Management:** The frontend utilizes advanced CSS transitions, `max-height` calculations, and Javascript mutual exclusion logic to ensure floating action buttons (FABs), legend controls, and bottom-sheet drawers never overlap on mobile devices.
+* **Security:** The backend uses `helmet` to secure the Express app by setting various HTTP headers and `express-rate-limit` to prevent abuse of the submission endpoint.
 
 ---
 
