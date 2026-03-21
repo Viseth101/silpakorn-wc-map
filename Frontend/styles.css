@@ -41,7 +41,14 @@ body.lang-kh .modal-content *, body.lang-kh .filter-popup *, body.lang-kh .anima
 
 .top-left-logo { top: 20px; left: 20px; padding: 10px 16px; display: flex; align-items: center; gap: 10px; border-radius: 999px; }
 .top-left-logo img { width: 30px; height: 30px; object-fit: contain; }
-.top-left-logo strong { font-size: 1.2rem; white-space: nowrap; }
+.top-left-logo strong { font-size: 1.2rem; }
+
+.short-title {
+    display: none;
+}
+.long-title {
+    display: inline;
+}
 
 .top-right-search { top: 20px; right: 20px; padding: 8px; display: flex; align-items: center; border-radius: 999px; }
 .top-right-search input { padding: 8px 40px 8px 34px; border-radius: 999px; border: 1px solid rgba(209, 213, 219, 0.5); outline: none; width: 240px; font-size: 13px; background: transparent; }
@@ -150,6 +157,17 @@ details summary { cursor: pointer; font-weight: bold; color: #1b3899; font-size:
 .btn-primary:hover { opacity: 0.9; transform: scale(1.02);}
 .btn-text { background: transparent; color: #4b5563; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; font-size: 14px; border-radius: 999px; transition: background 0.2s;}
 .btn-text:hover { background: #f3f4f6; }
+
+/* Accessible focus outlines */
+.btn-primary:focus-visible,
+.btn-text:focus-visible,
+.fab:focus-visible,
+.hamburger-btn:focus-visible,
+.pill-label:focus-visible,
+.toggle-label:focus-visible {
+    outline: 3px solid #facc15;
+    outline-offset: 2px;
+}
 
 /* Notifications & Map Modals */
 .map-confirm-ui { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(20px); opacity: 0; visibility: hidden; background: white; padding: 16px 24px; border-radius: 999px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); z-index: 2000; text-align: center; transition: all 0.3s ease; display: flex; align-items: center; gap: 15px;}
@@ -316,6 +334,13 @@ body.dark-theme .dual-toggle-label.active { color: #60a5fa; }
         transform: translateY(calc(-60dvh + 45px)); 
     }
     
+    .short-title {
+        display: inline;
+    }
+    .long-title {
+        display: none;
+    }
+
     .form-grid { grid-template-columns: 1fr; }
     .form-grid .full-width { grid-column: span 1; }
 }

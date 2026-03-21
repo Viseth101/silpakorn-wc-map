@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Silpakorn WC Map</title>
+    <title>Admin Dashboard - Silpakorn Bathroom Map</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -570,7 +570,13 @@
         async function initAdminMap() {
             try {
                 const res = await fetch('/api/config');
+                if (!res.ok) {
+                    throw new Error(`Failed to load map config (${res.status})`);
+                }
                 const config = await res.json();
+                if (!config.mapsApiKey) {
+                    throw new Error("Missing Google Maps API key.");
+                }
 
                 window.loadMapData = function () {
                     map = new google.maps.Map(document.getElementById("mapView"), {
@@ -587,6 +593,7 @@
                 document.head.appendChild(script);
             } catch (err) { 
                 console.error("Failed to load map config", err); 
+                showToast("Unable to load admin map.", "error");
             }
         }
 
@@ -609,16 +616,30 @@
         async function fetchPending() {
             try {
                 const res = await fetch('/api/pending');
+                if (!res.ok) {
+                    throw new Error(`Failed to fetch pending places (${res.status})`);
+                }
                 renderList(await res.json(), 'pendingList');
-            } catch (err) { console.error(err); }
+            } catch (err) { 
+                console.error("Error fetching pending places:", err); 
+                const list = document.getElementById('pendingList');
+                if (list) list.innerHTML = '<div class="empty-state">Failed to load pending places.</div>';
+            }
         }
 
         async function fetchAllPlaces() {
             try {
                 const res = await fetch('/api/all-places');
+                if (!res.ok) {
+                    throw new Error(`Failed to fetch places (${res.status})`);
+                }
                 allApprovedPlaces = await res.json();
                 applyAdminFilters();
-            } catch (err) { console.error(err); }
+            } catch (err) { 
+                console.error("Error fetching all places:", err); 
+                const list = document.getElementById('manageList');
+                if (list) list.innerHTML = '<div class="empty-state">Failed to load places.</div>';
+            }
         }
 
         function applyAdminFilters() {

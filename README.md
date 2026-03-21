@@ -1,4 +1,4 @@
-# <img src="Frontend/assets/silpakorn-icon.png" alt="Silpakorn Logo" width="45" height="45" align="top"> Silpakorn University Bathroom Map
+# <img src="Frontend/assets/silpakorn-icon.png" alt="Silpakorn Logo" width="45" height="45" align="top"> Silpakorn University Sanam Chan Bathroom Map
 
 ![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white)
 ![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white)
@@ -65,9 +65,16 @@ cd Silpakorn-WC-Map
 ```
 
 ### 2. Install backend dependencies
+The root `package.json` includes a convenient `start` script that installs backend dependencies and starts the server in one command.
+
+```bash
+npm start
+```
+Alternatively, for development with live-reloading (`nodemon`):
 ```bash
 cd Backend
 npm install
+npm run dev
 ```
 
 ### 3. Environment Setup
@@ -83,16 +90,26 @@ DATA_DIR=/path/to/volume/Database       # Where JSON and assets live
 FRONTEND_PATH=/app/Frontend             # If static files are hosted elsewhere
 ```
 
-### 4. Start the server
-```bash
-npm start
-# or run with nodemon for development:
-npm run dev
-```
-
-### 5. View the app
+### 4. View the app
 Open your browser and navigate to `http://localhost:3000`. 
 To access the admin panel, navigate to `http://localhost:3000/admin.html`.
+
+---
+
+## ⚙️ API Endpoints
+
+The backend provides the following REST API endpoints:
+
+*   `GET /api/config`: Returns the Google Maps API key.
+*   `POST /api/admin-login`: Authenticates an admin user.
+*   `GET /wc?lang=<lang>`: Returns a list of approved and pending restrooms in the specified language.
+*   `GET /api/pending`: Returns a list of all pending restrooms.
+*   `GET /api/all-places`: Returns a list of all approved restrooms.
+*   `POST /api/submit-place`: Submits a new restroom for admin review.
+*   `POST /api/approve`: Approves a pending restroom.
+*   `POST /api/reject`: Rejects a pending restroom or deletes an approved one.
+*   `POST /api/edit-place`: Edits an existing restroom.
+*   `POST /api/admin-add-place`: Allows an admin to add a new restroom directly.
 
 ---
 
@@ -102,6 +119,7 @@ To access the admin panel, navigate to `http://localhost:3000/admin.html`.
 * **Memory Leak Prevention:** The backend file system module (`fs.unlink`) actively deletes orphaned image files from the server whenever an admin rejects a pending place or replaces an image.
 * **Failsafe Parsing:** The `readJSON` helper includes robust error catching. If a database file is accidentally corrupted or emptied, it returns a blank array instead of crashing the Node server, preventing widespread outages.
 * **Responsive State Management:** The frontend utilizes advanced CSS transitions, `max-height` calculations, and Javascript mutual exclusion logic to ensure floating action buttons (FABs), legend controls, and bottom-sheet drawers never overlap on mobile devices.
+* **Security:** The backend uses `helmet` to secure the Express app by setting various HTTP headers and `express-rate-limit` to prevent abuse of the submission endpoint.
 
 ---
 

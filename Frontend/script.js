@@ -13,6 +13,7 @@ let draggableMarker = null;
 let newPlaceCoords = null;
 let centerChangeListener = null;
 let userLocationMarker = null;
+let searchDebounceId = null;
 
 const silpakornCoords = { lat: 13.8188, lng: 100.0402 };
 const campusBounds = {
@@ -133,6 +134,9 @@ async function fetchMarkerData(lang = "en") {
     allMarkers = [];
 
     const dataResponse = await fetch(`/wc?lang=${lang}`);
+    if (!dataResponse.ok) {
+      throw new Error(`Failed to load restroom data (${dataResponse.status})`);
+    }
     const locationsData = await dataResponse.json();
 
     const now = new Date();
@@ -304,13 +308,14 @@ function setupMobileAndFilterListeners() {
   const clearSearchBtn = document.getElementById("clearSearchBtn");
 
   searchInput.addEventListener("input", () => {
-    clearSearchBtn.style.display = searchInput.value ? "block" : "none";
-    handleSearchInput(); 
+    if (searchDebounceId) clearTimeout(searchDebounceId);
+    searchDebounceId = setTimeout(() => {
+      handleSearchInput();
+    }, 150);
   });
 
   clearSearchBtn.addEventListener("click", () => {
     searchInput.value = "";
-    clearSearchBtn.style.display = "none";
     handleSearchInput(); 
   });
 
@@ -325,6 +330,7 @@ function setupMobileAndFilterListeners() {
     menu.classList.toggle("menu-expanded");
     btn.classList.toggle("is-active");
     btn.innerText = btn.classList.contains("is-active") ? "✖" : "☰";
+    btn.setAttribute("aria-expanded", btn.classList.contains("is-active") ? "true" : "false");
   });
 
   filterToggleBtn.addEventListener("click", (e) => {
@@ -338,8 +344,6 @@ function setupMobileAndFilterListeners() {
     filterPopup.classList.remove("active");
     applyFilters();
   });
-
-  document.getElementById("searchInput").addEventListener("input", handleSearchInput);
 
   document.addEventListener("click", (e) => {
     if (filterPopup.classList.contains("active") && !filterPopup.contains(e.target) && !filterToggleBtn.contains(e.target)) {
@@ -477,6 +481,11 @@ function handleSearchInput() {
   const query = document.getElementById("searchInput").value.toLowerCase();
   const suggestionsBox = document.getElementById("searchSuggestions");
   suggestionsBox.innerHTML = "";
+
+  const clearSearchBtn = document.getElementById("clearSearchBtn");
+  if (clearSearchBtn) {
+    clearSearchBtn.style.display = query ? "block" : "none";
+  }
   
   applyFilters();
 
@@ -502,6 +511,7 @@ function handleSearchInput() {
         distText = `<span style="float:right; font-size: 11px; color:#10b981;">${dist > 1000 ? (dist / 1000).toFixed(1) + "km" : Math.round(dist) + "m"}</span>`;
       }
 
+      li.setAttribute("role", "option");
       li.innerHTML = `${match.raw.building} ${distText}`;
       li.onclick = () => {
         document.getElementById("searchInput").value = match.raw.building;
@@ -808,7 +818,8 @@ async function loadTranslations() {
     translations = await (await fetch("languages.json")).json();
     updatePageText();
   } catch (error) {
-    console.error(error);
+    console.error("Failed to load translations:", error);
+    showToast("Language pack failed to load. English will be used.", "error");
   }
 }
 

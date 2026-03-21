@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="title">Silpakorn WC Map</title>
+    <title data-i18n="title">SU Sanam Chan Bathroom Map</title>
     
     <link rel="icon" type="image/x-icon" href="./assets/silpakorn-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,25 +15,26 @@
 </head>
 
 <body>
-    <div id="loader" class="loader-overlay" style="display:none;">
+    <div id="loader" class="loader-overlay" style="display:none;" role="status" aria-live="polite" aria-busy="true" aria-label="Loading map and restroom data">
         <div class="loader-spinner"></div>
     </div>
 
     <div class="map-control top-left-logo">
         <img src="./assets/silpakorn-icon.png" alt="Silpakorn Logo">
-        <strong data-i18n="navTitle">Silpakorn WC Map</strong>
+        <strong class="nav-title-text long-title" data-i18n="navTitle">SU Sanam Chan Bathroom Map</strong>
+        <strong class="nav-title-text short-title" data-i18n="navTitleShort">SU Sanam Chan WC Map</strong>
         <button id="mobileSearchToggle" class="mobile-only-btn" title="Search">🔍</button>
     </div>
 
     <div class="map-control top-right-search" id="searchContainer">
         <div style="position: relative; display: flex; align-items: center; width: 100%;">
             <span class="search-icon">🔍</span>
-            <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Search restrooms...">
+            <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Search restrooms..." aria-label="Search restrooms">
             <span id="clearSearchBtn" style="position: absolute; right: 40px; cursor: pointer; display: none; color: #9ca3af; font-size: 16px;">✖</span>
             <button id="filterToggleBtn" class="filter-icon-btn" title="Filter by Time & Access">⏳</button>
         </div>
         
-        <ul id="searchSuggestions" class="suggestions-list"></ul>
+        <ul id="searchSuggestions" class="suggestions-list" role="listbox" aria-label="Search suggestions"></ul>
 
         <div id="filterPopup" class="filter-popup">
             <h4 data-i18n="filterTitle" style="margin: 0; font-size: 14px; margin-bottom: 12px;">Filter Restrooms</h4>
@@ -94,9 +95,9 @@
         </div>
     </div>
 
-    <button id="mobileMenuToggle" class="hamburger-btn mobile-only-btn">☰</button>
+    <button id="mobileMenuToggle" class="hamburger-btn mobile-only-btn" aria-label="Map options" aria-expanded="false" aria-controls="bottomControls">☰</button>
 
-    <div class="map-control bottom-left-controls" id="bottomControls">
+    <div class="map-control bottom-left-controls" id="bottomControls" aria-label="Map display options">
         <label class="toggle-label">
             <span data-i18n="satellite">Satellite</span>
             <div class="toggle-wrapper">
@@ -123,7 +124,7 @@
 
     <button id="locateMeBtn" class="fab locate-fab" title="Find My Location">🎯</button>
 
-    <div id="sidePanel" class="map-control side-panel">
+    <div id="sidePanel" class="map-control side-panel" role="complementary" aria-label="Restroom directory">
         <div class="mobile-pull-tab" onclick="toggleDirectory(event)">
             <div class="pull-indicator"></div>
             <span style="font-size: 13px; font-weight: bold; color: #6b7280;" data-i18n="placesListTitle">Restroom Directory</span>
@@ -255,7 +256,7 @@
         </div>
     </div>
 
-    <div id="toast" class="toast"></div>
+    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
     
     <script src="script.js"></script>
     <script src="utils.js"></script>

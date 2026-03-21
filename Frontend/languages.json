@@ -1,7 +1,8 @@
 {
   "en": {
-    "title": "Silpakorn Bathroom Map",
-    "navTitle": "Silpakorn Bathroom Map",
+    "title": "SU Sanam Chan Bathroom Map",
+    "navTitle": "SU Sanam Chan Bathroom Map",
+    "navTitleShort": "SU Sanam Chan WC Map",
     "satellite": "Satellite",
     "darkMode": "Dark Mode",
     "searchPlaceholder": "Search restrooms...",
@@ -40,8 +41,9 @@
     "btnConfirm": "Confirm"
   },
   "th": {
-    "title": "แผนที่ห้องน้ำมหาวิทยาลัยศิลปากร",
-    "navTitle": "แผนที่ห้องน้ำศิลปากร",
+    "title": "แผนที่ห้องน้ำ ม.ศิลปากร (สนามจันทร์)",
+    "navTitle": "แผนที่ห้องน้ำ ม.ศิลปากร (สนามจันทร์)",
+    "navTitleShort": "แผนที่ห้องน้ำ ม.ศิลปากร (สนามจันทร์)",
     "satellite": "ดาวเทียม",
     "darkMode": "โหมดมืด",
     "searchPlaceholder": "ค้นหาห้องน้ำ...",
@@ -80,8 +82,9 @@
     "btnConfirm": "ยืนยัน"
   },
   "cn": {
-    "title": "艺术大学洗手间地图",
-    "navTitle": "洗手间地图",
+    "title": "SU Sanam Chan 洗手间地图",
+    "navTitle": "SU Sanam Chan 洗手间地图",
+    "navTitleShort": "SU Sanam Chan WC 地图",
     "satellite": "卫星图",
     "darkMode": "深色模式",
     "searchPlaceholder": "搜索洗手间...",
@@ -120,8 +123,9 @@
     "btnConfirm": "确认"
   },
   "kh": {
-    "title": "ផែនទីបន្ទប់ទឹកសាកលវិទ្យាល័យស៊ីលប៉ាកន",
-    "navTitle": "ផែនទីបន្ទប់ទឹក",
+    "title": "ផែនទីបន្ទប់ទឹក SU (Sanam Chan)",
+    "navTitle": "ផែនទីបន្ទប់ទឹក SU (Sanam Chan)",
+    "navTitleShort": "ផែនទី WC SU (Sanam Chan)",
     "satellite": "ផ្កាយរណប",
     "darkMode": "ម៉ូតងងឹត",
     "searchPlaceholder": "ស្វែងរកបន្ទប់ទឹក...",
